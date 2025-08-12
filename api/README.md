@@ -1,48 +1,72 @@
-# FlowLedger API (Node + Express + TypeScript)
+# FlowLedger API
 
-This API mirrors the FlowLedger Azure SQL schema. It exposes REST endpoints with pagination, validation, and FK-aware logic. Suitable for Azure App Service.
+This directory contains the backend API for FlowLedger, built with Node.js and Express.
 
-## Setup
+## Prerequisites
 
-1) Install Node.js 20+
-2) Copy env
-```
-cp .env.example .env
-```
-3) Install deps
-```
-npm install
-```
-4) Run dev
-```
-npm run dev
-```
+- Node.js (v20.x or later)
+- Access to the Azure SQL database
 
-API: http://localhost:4000
+## Local Development
 
-## Initial Route s
-- GET /healthz
-- /api/clients (CRUD)
-- /api/audits (CRUD)
-- /api/views (dashboard-stats, audit-recent-touch)
+1.  **Navigate to the API directory:**
+    ```bash
+    cd api
+    ```
 
-Follow the patterns to implement remaining tables.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-## Auth to Azure SQL
+3.  **Set up environment variables:**
+    Create a `.env` file in the `api` directory and add the following variables.
 
-The DB connection supports multiple auth modes via `SQL_AUTH`:
+    ### Authentication Modes (`SQL_AUTH`)
 
-- sql (default): username/password using `SQL_USER` and `SQL_PASSWORD`.
-- aad-default: Azure AD Default Credential (works on Azure with Managed Identity, or local dev with `az login`).
-- aad-msi: Explicit Managed Identity for App Service/Functions. Optional `AZURE_CLIENT_ID` to select user-assigned MI.
-- aad-access-token: Acquire token via `@azure/identity` and pass as access token.
+    The API supports multiple database authentication methods, configured via the `SQL_AUTH` environment variable.
 
-Env variables:
+    #### 1. SQL Authentication (Default)
+    Uses a traditional SQL username and password.
 
-- SQL_SERVER, SQL_DATABASE (required)
-- SQL_AUTH=sql|aad-default|aad-msi|aad-access-token
-- For sql: SQL_USER, SQL_PASSWORD
-- For aad-msi/aad-default: optional AZURE_CLIENT_ID (aka MI client id)
-- SQL_ENCRYPT=true, SQL_TRUST_SERVER_CERTIFICATE=false
+    ```dotenv
+    # .env
+    SQL_SERVER="your-server.database.windows.net"
+    SQL_DATABASE="your-database-name"
+    SQL_AUTH="sql"
+    SQL_USER="your-sql-username"
+    SQL_PASSWORD="your-sql-password"
+    PORT=4000
+    ```
 
-When the server starts it logs `sql.auth` mode to aid troubleshooting.
+    #### 2. Azure AD - Managed Identity
+    Uses the Managed Identity of the deployed Azure service (like an App Service or Function App) to authenticate. This is the recommended method for production environments.
+
+    ```dotenv
+    # .env
+    SQL_SERVER="your-server.database.windows.net"
+    SQL_DATABASE="your-database-name"
+    SQL_AUTH="aad-msi"
+    PORT=4000
+    ```
+
+    #### 3. Azure AD - Default Credential
+    Uses the `@azure/identity` `DefaultAzureCredential` flow. This is useful for local development when you are logged into Azure via the Azure CLI or other methods.
+
+    ```dotenv
+    # .env
+    SQL_SERVER="your-server.database.windows.net"
+    SQL_DATABASE="your-database-name"
+    SQL_AUTH="aad-default"
+    PORT=4000
+    ```
+
+4.  **Run the server:**
+    ```bash
+    npm start
+    ```
+    The API will be available at `http://localhost:4000`. The console will log the active authentication mode on startup.
+
+## Deployment
+
+This API is configured for continuous deployment to an Azure Function App. Deployments are automatically triggered from the `main` branch using the Azure Deployment Center.
