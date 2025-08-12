@@ -1,4 +1,5 @@
 name: Deploy Web to Azure Web App
+# trigger: no-op change to run workflow
 
 on:
   push:
