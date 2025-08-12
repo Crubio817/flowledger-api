@@ -1,4 +1,10 @@
-name: Deploy Web to Azure Web App
+name: Deploy Web     env:
+      AZURE_WEBAPP_NAME: app-flowledger-web-dev-wus2
+      NODE_VERSION: '20.x'
+      AZURE_CLIENT_ID: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8A6E35EB7CF4609B7BAB64A61EC2F13 }}
+      AZURE_TENANT_ID: ${{ secrets.AZUREAPPSERVICE_TENANTID_871A05C4211546078108AD4F8B2EF931 }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_ED3A2B0B95CD4E1C97045048DD9BEFCC }}
+    steps:e Web App
 # trigger: no-op change to run workflow
 
 on:
