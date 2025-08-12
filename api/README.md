@@ -20,7 +20,7 @@ npm run dev
 
 API: http://localhost:4000
 
-## Initial Routes
+## Initial Route s
 - GET /healthz
 - /api/clients (CRUD)
 - /api/audits (CRUD)
