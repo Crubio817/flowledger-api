@@ -1,2 +1,8 @@
-# flowledger-api
-Backend API for FlowLedger — Azure Functions with Managed Identity to securely serve dashboard, SIPOC, and audit data from Azure SQL.
+# FlowLedger Monorepo
+
+This repository hosts:
+
+- api/ — Node.js (TypeScript) Express API for FlowLedger (Azure SQL)
+- web/ — React (TypeScript) frontend (to be added)
+
+See `api/README.md` to run the backend.

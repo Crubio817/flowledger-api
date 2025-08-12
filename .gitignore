@@ -1,0 +1,18 @@
+# Node
+node_modules/
+api/.env
+api/dist/
+
+# Root env
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
