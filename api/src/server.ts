@@ -6,6 +6,12 @@ import { errorHandler } from './middleware/error';
 import clients from './routes/clients';
 import audits from './routes/audits';
 import views from './routes/views';
+import clientEngagements from './routes/client_engagements';
+import clientIntegrations from './routes/client_integrations';
+import clientLocations from './routes/client_locations';
+import clientContacts from './routes/client_contacts';
+import clientOnboarding from './routes/client_onboarding_tasks';
+import clientDocuments from './routes/client_documents';
 import auditSipoc from './routes/audit_sipoc';
 import interviews from './routes/interviews';
 import interviewResponses from './routes/interview_responses';
@@ -54,6 +60,12 @@ app.use('/api/interview-responses', interviewResponses);
 app.use('/api/findings', findings);
 app.use('/api/process-maps', processMaps);
 app.use('/api/auto', auto); // dynamic auto-generated endpoints (guarded by feature flag)
+app.use('/api/client-engagements', clientEngagements);
+app.use('/api/client-integrations', clientIntegrations);
+app.use('/api/client-locations', clientLocations);
+app.use('/api/client-contacts', clientContacts);
+app.use('/api/client-onboarding-tasks', clientOnboarding);
+app.use('/api/client-documents', clientDocuments);
 
 app.use(errorHandler);
 
