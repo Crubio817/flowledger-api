@@ -1,0 +1,6 @@
+nohup: ignoring input
+
+> flowledger-api@0.1.0 start
+> node dist/server.js
+
+API listening on http://localhost:4000 (sql.auth=sql)

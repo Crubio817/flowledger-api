@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { api, ApiResponse } from '../lib/api';
+import { getPath } from '../lib/api';
 
 export default function Audits() {
   const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get<ApiResponse<{ items: any[] }>>('/audits?limit=20').then((r) => setItems(r.data.data.items));
+    (async () => {
+  const r = await getPath('/api/audits', { limit: 20 });
+  // r matches success envelope with optional data property
+  setItems(((r as any).data ?? []) as any[]);
+    })();
   }, []);
 
   return (

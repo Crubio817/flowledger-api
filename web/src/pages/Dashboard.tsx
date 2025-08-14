@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
-import { api, ApiResponse } from '../lib/api';
+import { getDashboardStats, getRecentAudits } from '../lib/api';
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<ReturnType<typeof Object> | null>(null);
   const [recent, setRecent] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get<ApiResponse<any>>('/views/dashboard-stats').then((r) => setStats(r.data.data));
-    api.get<ApiResponse<{ items: any[] }>>('/views/audit-recent-touch?limit=5').then((r) => setRecent(r.data.data.items));
+    (async () => {
+      const s = await getDashboardStats();
+      setStats(s);
+      const ra = await getRecentAudits(5);
+      setRecent(ra);
+    })();
   }, []);
 
   return (

@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
 export function ok(res: Response, data: unknown, status = 200) {
-  res.status(status).json({ status: 'ok', data, error: null });
+  // Success envelope (no error field so it matches documented schemas)
+  res.status(status).json({ status: 'ok', data });
 }
 
 export function badRequest(res: Response, msg: string) {
@@ -28,7 +29,7 @@ export function getPagination(req: Request) {
 }
 
 export function listOk<T>(res: Response, items: T[], meta: { page: number; limit: number; total?: number }, status = 200) {
-  res.status(status).json({ status: 'ok', data: items, meta, error: null });
+  res.status(status).json({ status: 'ok', data: items, meta });
 }
 
 export function notFound(res: Response, msg = 'Not found') {

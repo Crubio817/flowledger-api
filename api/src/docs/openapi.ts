@@ -56,6 +56,19 @@ const options: Options = {
           },
           required: ['audit_id', 'client_id', 'title', 'status', 'last_touched_utc']
         },
+        Audit: {
+          type: 'object',
+          properties: {
+            audit_id: { type: 'integer' },
+            client_id: { type: 'integer' },
+            title: { type: 'string' },
+            scope: { type: 'string', nullable: true },
+            status: { type: 'string' },
+            created_utc: { type: 'string', format: 'date-time' },
+            updated_utc: { type: 'string', format: 'date-time' }
+          },
+          required: ['audit_id', 'client_id', 'title']
+        },
         SipocDoc: {
           type: 'object',
           properties: {
@@ -124,6 +137,22 @@ const options: Options = {
             contentType: { type: 'string' }
           },
           required: ['uploadUrl', 'blob_path', 'contentType']
+        },
+        ClientsOverviewItem: {
+          type: 'object',
+          properties: {
+            client_id: { type: 'integer' },
+            client_name: { type: 'string' },
+            is_active: { type: 'boolean' },
+            created_utc: { type: 'string', format: 'date-time' },
+            primary_contact_name: { type: 'string', nullable: true },
+            primary_contact_email: { type: 'string', nullable: true },
+            tags: { type: 'string', nullable: true, description: 'Comma-delimited or JSON string of tags' },
+            engagement_count: { type: 'integer' },
+            pending_onboarding_tasks: { type: 'integer' },
+            last_activity_utc: { type: 'string', format: 'date-time', nullable: true }
+          },
+          required: ['client_id', 'client_name', 'is_active', 'created_utc']
         }
       }
     }

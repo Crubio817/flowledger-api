@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { api, ApiResponse } from '../lib/api';
+import { getClients } from '../lib/api';
 
 export default function Clients() {
   const [items, setItems] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get<ApiResponse<{ items: any[] }>>('/clients?limit=20').then((r) => setItems(r.data.data.items));
+    (async () => {
+      const list = await getClients(20);
+      setItems(list);
+    })();
   }, []);
 
   return (

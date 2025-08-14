@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+  "preview": "vite preview",
+  "gen:api:types": "openapi-typescript ${SPEC_URL:-../api/openapi.snapshot.json} --output src/lib/api-types.ts",
+  "postinstall": "npm run gen:api:types || echo 'Type gen skipped'"
   },
   "dependencies": {
     "axios": "^1.7.4",
@@ -15,6 +17,7 @@
     "react-router-dom": "^6.26.1"
   },
   "devDependencies": {
+  "openapi-typescript": "^7.2.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

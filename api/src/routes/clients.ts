@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
+import { ClientCreateBody, ClientUpdateBody, CreateProcBody, ClientSetupBody } from '../validation/schemas';
+import { orchestrateClientSetup } from '../utils/clientSetup';
 import { logActivity } from '../utils/activity';
 
 const router = Router();
@@ -76,24 +78,20 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req, res) => {
-    const { client_id, name, is_active = true } = req.body || {};
-    if (typeof client_id !== 'number' || !name || typeof name !== 'string')
-      return badRequest(res, 'client_id (number) and name (string) are required');
-
+    const parsed = ClientCreateBody.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
+    const { client_id, name, is_active = true } = parsed.data;
+    if (typeof client_id !== 'number') return badRequest(res, 'client_id required');
     const pool = await getPool();
-    await pool
-      .request()
+    await pool.request()
       .input('id', sql.Int, client_id)
       .input('name', sql.NVarChar(200), name)
       .input('active', sql.Bit, is_active ? 1 : 0)
       .query(`INSERT INTO app.clients (client_id, name, is_active) VALUES (@id, @name, @active)`);
-
-    const read = await pool.request().input('id', sql.Int, client_id).query(
-      `SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id = @id`
-    );
-  const created = read.recordset[0];
-  await logActivity({ type: 'ClientCreated', title: `Client ${name} created`, client_id: client_id });
-  ok(res, created, 201);
+    const read = await pool.request().input('id', sql.Int, client_id).query(`SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id = @id`);
+    const created = read.recordset[0];
+    await logActivity({ type: 'ClientCreated', title: `Client ${name} created`, client_id });
+    ok(res, created, 201);
   })
 );
 
@@ -102,30 +100,21 @@ router.put(
   asyncHandler(async (req, res) => {
     const clientId = Number(req.params.client_id);
     if (Number.isNaN(clientId)) return badRequest(res, 'client_id must be int');
-
+    const parsed = ClientUpdateBody.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
+    const data = parsed.data;
     const sets: string[] = [];
     const pool = await getPool();
     const request = pool.request().input('id', sql.Int, clientId);
-
-    if (typeof req.body.name === 'string') {
-      sets.push('name = @name');
-      request.input('name', sql.NVarChar(200), req.body.name);
-    }
-    if (typeof req.body.is_active === 'boolean') {
-      sets.push('is_active = @active');
-      request.input('active', sql.Bit, req.body.is_active ? 1 : 0);
-    }
+    if (data.name !== undefined) { sets.push('name = @name'); request.input('name', sql.NVarChar(200), data.name); }
+    if (data.is_active !== undefined) { sets.push('is_active = @active'); request.input('active', sql.Bit, data.is_active ? 1 : 0); }
     if (!sets.length) return badRequest(res, 'No fields to update');
-
-  const result = await request.query(`UPDATE app.clients SET ${sets.join(', ')} WHERE client_id = @id`);
-  if (result.rowsAffected[0] === 0) return notFound(res);
-
-    const read = await pool.request().input('id', sql.Int, clientId).query(
-      `SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id = @id`
-    );
-  const updated = read.recordset[0];
-  await logActivity({ type: 'ClientUpdated', title: `Client ${clientId} updated`, client_id: clientId });
-  ok(res, updated);
+    const result = await request.query(`UPDATE app.clients SET ${sets.join(', ')} WHERE client_id = @id`);
+    if (result.rowsAffected[0] === 0) return notFound(res);
+    const read = await pool.request().input('id', sql.Int, clientId).query(`SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id = @id`);
+    const updated = read.recordset[0];
+    await logActivity({ type: 'ClientUpdated', title: `Client ${clientId} updated`, client_id: clientId });
+    ok(res, updated);
   })
 );
 
@@ -146,6 +135,158 @@ router.delete(
       // Likely FK violation
       res.status(409).json({ status: 'error', data: null, error: e.message });
     }
+  })
+);
+
+/**
+ * @openapi
+ * /api/clients/create-proc:
+ *   post:
+ *     summary: Create client via stored procedure sp_create_client
+ *     description: Dynamically inspects parameters of app.sp_create_client and binds matching JSON body fields (strip leading @). Any OUTPUT params returned if present along with first recordset row.
+ *     tags: [Clients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             additionalProperties: true
+ *             description: Keys must match stored procedure parameter names without the leading @ symbol.
+ *     responses:
+ *       200:
+ *         description: Client created (procedure result)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     client: { type: object, additionalProperties: true }
+ *                     proc_result: { type: object, additionalProperties: true }
+ */
+router.post(
+  '/create-proc',
+  asyncHandler(async (req, res) => {
+    const parsed = CreateProcBody.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
+    const pool = await getPool();
+    // Introspect proc parameters
+    const paramMeta = await pool.request().query(`
+      SELECT p.name AS param_name, t.name AS type_name, p.max_length, p.is_output, p.has_default_value
+      FROM sys.parameters p
+      JOIN sys.procedures s ON p.object_id = s.object_id
+      JOIN sys.schemas sc ON s.schema_id = sc.schema_id
+      JOIN sys.types t ON p.user_type_id = t.user_type_id
+      WHERE sc.name='app' AND s.name='sp_create_client'
+      ORDER BY p.parameter_id`);
+    const params = paramMeta.recordset as { param_name: string; type_name: string; max_length: number; is_output: boolean; has_default_value: boolean }[];
+    if (!params.length) return badRequest(res, 'Stored procedure sp_create_client not found');
+  const body = parsed.data as Record<string, unknown>;
+    const request = pool.request();
+    // Bind inputs
+    for (const p of params) {
+      const key = p.param_name.replace(/^@/, '');
+      if (p.is_output) continue; // skip output for now (tedious driver output params different)
+      if (body[key] === undefined && !p.has_default_value) {
+        return badRequest(res, `Missing required field: ${key}`);
+      }
+      if (body[key] !== undefined) {
+        // Basic type mapping
+        let val = body[key];
+        switch (p.type_name) {
+          case 'bit':
+            val = !!val;
+            request.input(key, sql.Bit, val ? 1 : 0);
+            break;
+          case 'int':
+          case 'bigint':
+            if (val === null || val === undefined || val === '') { return badRequest(res, `Param ${key} must be number`); }
+            request.input(key, sql.Int, Number(val));
+            break;
+          case 'nvarchar':
+          case 'varchar':
+            request.input(key, sql.NVarChar(p.max_length === -1 ? sql.MAX : p.max_length), String(val));
+            break;
+          case 'datetime2':
+          case 'datetimeoffset':
+            request.input(key, sql.DateTime2, val as any);
+            break;
+          default:
+            request.input(key, body[key] as any);
+        }
+      }
+    }
+    const result = await request.execute('app.sp_create_client');
+  let clientRow: any = null;
+  // Try to infer client_id from first recordset row (several possible column names) or return value
+  const first = result.recordset && result.recordset[0];
+    let clientId = first && (first.client_id || first.new_client_id || first.id);
+    if (!clientId && typeof result.returnValue === 'number') clientId = result.returnValue;
+    if (typeof clientId === 'string' && /^\d+$/.test(clientId)) clientId = Number(clientId);
+    if (typeof clientId === 'number') {
+      const read = await pool.request().input('id', sql.BigInt, clientId).query(`SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id=@id`);
+      clientRow = read.recordset[0] || null;
+    }
+    ok(res, { client: clientRow, proc_result: { recordset: result.recordset, returnValue: result.returnValue } });
+  })
+);
+
+/**
+ * @openapi
+ * /api/clients/{client_id}/setup:
+ *   post:
+ *     summary: Orchestrate post-creation client setup (idempotent)
+ *     tags: [Clients]
+ *     parameters:
+ *       - in: path
+ *         name: client_id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [playbook_code, owner_user_id]
+ *             properties:
+ *               client_name: { type: string }
+ *               playbook_code: { type: string }
+ *               owner_user_id: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Setup executed (idempotent)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     client_slug: { type: string }
+ *                     folders:
+ *                       type: array
+ *                       items: { type: string }
+ */
+router.post(
+  '/:client_id/setup',
+  asyncHandler(async (req, res) => {
+    const clientId = Number(req.params.client_id);
+    if (Number.isNaN(clientId)) return badRequest(res, 'client_id must be int');
+    const parsed = ClientSetupBody.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
+    const pool = await getPool();
+    const exists = await pool.request().input('id', sql.Int, clientId).query('SELECT client_id, name FROM app.clients WHERE client_id=@id');
+    const row = exists.recordset[0];
+    if (!row) return notFound(res);
+    const result = await orchestrateClientSetup({ client_id: clientId, client_name: parsed.data.client_name || row.name, playbook_code: parsed.data.playbook_code, owner_user_id: parsed.data.owner_user_id });
+    ok(res, result);
   })
 );
 

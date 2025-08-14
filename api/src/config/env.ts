@@ -49,6 +49,9 @@ export const env = {
   azure: {
     managedIdentityClientId: process.env.AZURE_CLIENT_ID || process.env.MI_CLIENT_ID || undefined,
     tenantId: process.env.AZURE_TENANT_ID || process.env.TENANT_ID || undefined
+  },
+  features: {
+    autoApi: ['1','true','yes','on'].includes((process.env.AUTO_API||'').toLowerCase())
   }
 };
 

@@ -11,6 +11,7 @@ import interviews from './routes/interviews';
 import interviewResponses from './routes/interview_responses';
 import findings from './routes/findings';
 import processMaps from './routes/process_maps';
+import auto from './routes/auto';
 import { setupOpenApi } from './docs/openapi';
 
 assertConfig();
@@ -52,6 +53,7 @@ app.use('/api/interviews', interviews);
 app.use('/api/interview-responses', interviewResponses);
 app.use('/api/findings', findings);
 app.use('/api/process-maps', processMaps);
+app.use('/api/auto', auto); // dynamic auto-generated endpoints (guarded by feature flag)
 
 app.use(errorHandler);
 

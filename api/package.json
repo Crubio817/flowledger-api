@@ -8,7 +8,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint .",
-    "db:ping": "node scripts/db-ping.cjs"
+  "db:ping": "node scripts/db-ping.cjs",
+  "db:schema": "ts-node scripts/schema-introspect.ts",
+  "gen:api:snapshot": "curl -s ${SPEC_URL:-http://localhost:4000/openapi.json} > openapi.snapshot.json"
   },
   "dependencies": {
     "@azure/identity": "^4.11.1",
