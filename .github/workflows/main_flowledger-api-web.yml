@@ -40,10 +40,9 @@ jobs:
           rm -rf ../deploy_tmp || true
           mkdir -p ../deploy_tmp
           cp -R dist ../deploy_tmp/
-          # include package-lock if present to help deterministic installs
+          # include package.json and lockfile so Azure can install dependencies
+          cp package.json ../deploy_tmp/
           if [ -f package-lock.json ]; then cp package-lock.json ../deploy_tmp/; fi
-          # write minimal runtime package.json without here-doc (avoids YAML indentation issues)
-          printf '{\n  "name": "flowledger-api",\n  "version": "0.1.0",\n  "main": "dist/server.js",\n  "engines": { "node": "20.x" },\n  "scripts": { "start": "node dist/server.js" }\n}\n' > ../deploy_tmp/package.json
           # zip the prepared deploy_tmp folder contents (package.json at root + dist)
           cd ../deploy_tmp
           zip -r ../deploy.zip . -x "**/node_modules/**" >/dev/null
