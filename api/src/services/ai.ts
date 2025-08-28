@@ -33,7 +33,11 @@ export async function chatOnce(params: {
   const { messages, model = process.env.OPENAI_MODEL || 'gpt-4o-mini', temperature = 0.2, tools } = params;
   const resp = await client.chat.completions.create({
     model,
-    messages,
+    // cast to any to satisfy the OpenAI typings which require a more specific
+    // union (including function messages that carry a `name`). Our
+    // ChatMessage type doesn't include `name`, so cast here to keep runtime
+    // behavior while appeasing the compiler.
+    messages: messages as any,
     temperature,
     ...(tools ? { tools, tool_choice: 'auto' as const } : {}),
   });

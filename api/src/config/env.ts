@@ -13,7 +13,10 @@ const candidates = [
 ];
 for (const p of candidates) {
   if (fs.existsSync(p)) {
-    dotenv.config({ path: p, override: true });
+    // Load candidate .env files but do NOT override environment variables
+    // that were explicitly set (for example via `PORT=4001 node ...`). This
+    // ensures runtime invocations can override repository .env defaults.
+    dotenv.config({ path: p });
   }
 }
 

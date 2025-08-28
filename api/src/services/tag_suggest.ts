@@ -19,6 +19,17 @@ export async function suggestTagsForNote(params: TagSuggestionInput): Promise<Ta
   const maxExisting = Math.max(0, Math.min(10, params.maxExisting ?? 5));
   const maxNew = Math.max(0, Math.min(5, params.maxNew ?? 2));
 
+  // Local dev/testing shortcut: if LOCAL_TAG_SUGGEST_MOCK=1, return a deterministic
+  // mock result without calling OpenAI or the database. This keeps the API
+  // contract testable in dev containers that lack secrets or DB connectivity.
+  if (process.env.LOCAL_TAG_SUGGEST_MOCK === '1') {
+    return {
+      existing: [{ tag_id: 101, tag_name: 'security', reason: 'mentioned security' }].slice(0, maxExisting),
+      new: [{ tag_name: 'cloud-compliance', reason: 'proposed new tag for compliance' }].slice(0, maxNew),
+      rationale: 'Prefer existing tags; suggested a focused new tag for compliance.'
+    };
+  }
+
   const pool = await getPool();
   // Existing tags for this client
   const existing = await pool
@@ -77,7 +88,7 @@ Return strict JSON with optional per-tag reasoning for UI hovers:
 
   // Map existing name suggestions to tag_id from catalog
   const nameToId = new Map(allTags.map(t => [t.tag_name.toLowerCase(), t.tag_id] as const));
-  const existingOut: { tag_id: number; tag_name: string }[] = [];
+  const existingOut: { tag_id: number; tag_name: string; reason?: string }[] = [];
   for (const item of existingItems) {
     const name = item.name;
     const id = nameToId.get(name.toLowerCase());
