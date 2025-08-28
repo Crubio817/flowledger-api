@@ -43,9 +43,13 @@ jobs:
           # include package.json and lockfile so Azure can install dependencies
           cp package.json ../deploy_tmp/
           if [ -f package-lock.json ]; then cp package-lock.json ../deploy_tmp/; fi
+          # install production dependencies into the deploy folder so the app is self-contained
+          pushd ../deploy_tmp >/dev/null
+          npm ci --omit=dev --no-audit --no-fund
+          popd >/dev/null
           # zip the prepared deploy_tmp folder contents (package.json at root + dist)
           cd ../deploy_tmp
-          zip -r ../deploy.zip . -x "**/node_modules/**" >/dev/null
+          zip -r ../deploy.zip . >/dev/null
           cd ..
           rm -rf deploy_tmp
 

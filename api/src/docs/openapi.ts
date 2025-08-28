@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import swaggerJSDoc from 'swagger-jsdoc';
 import type { Options } from 'swagger-jsdoc';
 import { Express } from 'express';
@@ -178,7 +180,22 @@ const options: Options = {
 };
 
 export function setupOpenApi(app: Express) {
-  const spec = swaggerJSDoc(options);
+  // If a generated snapshot exists (openapi.snapshot.json) prefer serving it so manual
+  // edits are visible in Swagger UI (useful for local testing and CI snapshots).
+  const snapshotPath = path.resolve(__dirname, '../../openapi.snapshot.json');
+  let spec: any;
+  if (fs.existsSync(snapshotPath)) {
+    try {
+      const raw = fs.readFileSync(snapshotPath, 'utf8');
+      spec = JSON.parse(raw);
+    } catch (err) {
+      // if parsing fails, fall back to generated spec
+      console.warn('Failed to read openapi.snapshot.json, falling back to swagger-jsdoc', err);
+      spec = swaggerJSDoc(options);
+    }
+  } else {
+    spec = swaggerJSDoc(options);
+  }
   app.get('/openapi.json', (_req, res) => res.json(spec));
   app.use('/api/docs', swaggerServe, swaggerSetup(spec));
 }
