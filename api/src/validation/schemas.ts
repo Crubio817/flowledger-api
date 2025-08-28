@@ -21,7 +21,10 @@ export const AuditUpdateBody = AuditSchema.pick({ title: true, scope: true, stat
 
 export const CreateProcBody = z.object({
   Name: z.string().min(1).max(200),
-  IsActive: z.boolean().optional()
+  IsActive: z.boolean().optional(),
+  PrimaryContactId: z.number().int().nullable().optional(),
+  PlaybookCode: z.string().max(50).optional(),
+  OwnerUserId: z.number().int().nullable().optional()
 });
 
 export const ClientSetupBody = z.object({
@@ -68,12 +71,17 @@ export const ClientLocationUpdate = ClientLocationCreate.partial().refine(d => O
 export const ClientContactSchema = z.object({
   contact_id: z.number().int().nonnegative().optional(),
   client_id: z.number().int().nonnegative(),
-  name: z.string().min(1).max(200),
-  email: z.string().email().optional(),
-  phone: z.string().max(60).optional(),
-  role: z.string().max(100).optional()
+  first_name: z.string().min(0).max(100).optional(),
+  last_name: z.string().min(0).max(100).optional(),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().max(60).optional().nullable(),
+  title: z.string().max(200).optional().nullable(),
+  is_primary: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+  created_utc: z.string().nullable().optional(),
+  updated_utc: z.string().nullable().optional()
 });
-export const ClientContactCreate = ClientContactSchema.pick({ client_id: true, name: true, email: true, phone: true, role: true });
+export const ClientContactCreate = ClientContactSchema.pick({ client_id: true, first_name: true, last_name: true, email: true, phone: true, title: true, is_primary: true, is_active: true });
 export const ClientContactUpdate = ClientContactCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const OnboardingTaskSchema = z.object({
@@ -102,3 +110,19 @@ export type ClientLocation = z.infer<typeof ClientLocationSchema>;
 export type ClientContact = z.infer<typeof ClientContactSchema>;
 export type OnboardingTask = z.infer<typeof OnboardingTaskSchema>;
 export type ClientDocument = z.infer<typeof ClientDocumentSchema>;
+
+export const ClientTagSchema = z.object({
+  tag_id: z.number().int().nonnegative().optional(),
+  tag_name: z.string().min(1).max(200)
+});
+export const ClientTagCreate = ClientTagSchema.pick({ tag_name: true });
+export const ClientTagUpdate = ClientTagCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+export const ClientTagMapSchema = z.object({
+  client_id: z.number().int().nonnegative(),
+  tag_id: z.number().int().nonnegative()
+});
+export const ClientTagMapCreate = ClientTagMapSchema;
+export type ClientTag = z.infer<typeof ClientTagSchema>;
+export type ClientTagMap = z.infer<typeof ClientTagMapSchema>;
+

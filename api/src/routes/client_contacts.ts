@@ -11,6 +11,13 @@ const router = Router();
  *   get:
  *     summary: List client contacts
  *     tags: [ClientContacts]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1 }
  *     responses:
  *       200:
  *         description: Contacts list
@@ -27,16 +34,15 @@ const router = Router();
  *                     properties:
  *                       contact_id: { type: integer }
  *                       client_id: { type: integer }
- *                       name: { type: string }
+ *                       first_name: { type: string }
+ *                       last_name: { type: string }
  *                       email: { type: string }
  *                       phone: { type: string }
- *                       role: { type: string }
+ *                       title: { type: string }
+ *                       is_primary: { type: boolean }
+ *                       is_active: { type: boolean }
  *                 meta:
- *                   type: object
- *                   properties:
- *                     page: { type: integer }
- *                     limit: { type: integer }
- *                     total: { type: integer }
+ *                   $ref: '#/components/schemas/PageMeta'
  *   post:
  *     summary: Create client contact
  *     tags: [ClientContacts]
@@ -46,13 +52,16 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [client_id, name]
+ *             required: [client_id]
  *             properties:
  *               client_id: { type: integer }
- *               name: { type: string }
+ *               first_name: { type: string }
+ *               last_name: { type: string }
  *               email: { type: string }
  *               phone: { type: string }
- *               role: { type: string }
+ *               title: { type: string }
+ *               is_primary: { type: boolean }
+ *               is_active: { type: boolean }
  *     responses:
  *       201:
  *         description: Contact created
@@ -67,12 +76,28 @@ const router = Router();
  *                   properties:
  *                     contact_id: { type: integer }
  *                     client_id: { type: integer }
- *                     name: { type: string }
+ *                     first_name: { type: string }
+ *                     last_name: { type: string }
  *                     email: { type: string }
  *                     phone: { type: string }
- *                     role: { type: string }
+ *                     title: { type: string }
  */
-router.get('/', asyncHandler(async (req, res) => { const { page, limit, offset } = (await import('../utils/http')).getPagination(req); const pool = await getPool(); const r = await pool.request().input('offset', sql.Int, offset).input('limit', sql.Int, limit).query(`SELECT contact_id, client_id, name, email, phone, role FROM app.client_contacts ORDER BY contact_id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`); listOk(res, r.recordset, { page, limit, total: r.recordset.length }); }));
+router.get(
+	'/',
+	asyncHandler(async (req, res) => {
+		const { page, limit, offset } = (await import('../utils/http')).getPagination(req);
+		const pool = await getPool();
+		const r = await pool
+			.request()
+			.input('offset', sql.Int, offset)
+			.input('limit', sql.Int, limit)
+			.query(
+				`SELECT TOP (@limit) contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts ORDER BY contact_id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`
+			);
+		listOk(res, r.recordset, { page, limit, total: r.recordset.length });
+	})
+);
+
 /**
  * @openapi
  * /api/client-contacts/{id}:
@@ -98,10 +123,11 @@ router.get('/', asyncHandler(async (req, res) => { const { page, limit, offset }
  *                   properties:
  *                     contact_id: { type: integer }
  *                     client_id: { type: integer }
- *                     name: { type: string }
+ *                     first_name: { type: string }
+ *                     last_name: { type: string }
  *                     email: { type: string }
  *                     phone: { type: string }
- *                     role: { type: string }
+ *                     title: { type: string }
  *   put:
  *     summary: Update client contact
  *     tags: [ClientContacts]
@@ -117,10 +143,13 @@ router.get('/', asyncHandler(async (req, res) => { const { page, limit, offset }
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
+ *               first_name: { type: string }
+ *               last_name: { type: string }
  *               email: { type: string }
  *               phone: { type: string }
- *               role: { type: string }
+ *               title: { type: string }
+ *               is_primary: { type: boolean }
+ *               is_active: { type: boolean }
  *     responses:
  *       200:
  *         description: Contact updated
@@ -135,10 +164,10 @@ router.get('/', asyncHandler(async (req, res) => { const { page, limit, offset }
  *                   properties:
  *                     contact_id: { type: integer }
  *                     client_id: { type: integer }
- *                     name: { type: string }
+ *                     first_name: { type: string }
+ *                     last_name: { type: string }
  *                     email: { type: string }
  *                     phone: { type: string }
- *                     role: { type: string }
  *   delete:
  *     summary: Delete client contact
  *     tags: [ClientContacts]
@@ -161,7 +190,71 @@ router.get('/', asyncHandler(async (req, res) => { const { page, limit, offset }
  *                   properties:
  *                     deleted: { type: integer }
  */
-router.post('/', asyncHandler(async (req, res) => { const parsed = ClientContactCreate.safeParse(req.body); if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; ')); const { client_id, name, email = null, phone = null, role = null } = parsed.data; const pool = await getPool(); await pool.request().input('client_id', sql.Int, client_id).input('name', sql.NVarChar(200), name).input('email', sql.NVarChar(200), email).input('phone', sql.NVarChar(60), phone).input('role', sql.NVarChar(100), role).query(`INSERT INTO app.client_contacts (client_id, name, email, phone, role) VALUES (@client_id, @name, @email, @phone, @role)`); const read = await pool.request().query(`SELECT TOP 1 contact_id, client_id, name, email, phone, role FROM app.client_contacts ORDER BY contact_id DESC`); ok(res, read.recordset[0], 201); }));
-router.put('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res,'id must be int'); const parsed = ClientContactUpdate.safeParse(req.body); if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; ')); const data = parsed.data; const sets: string[] = []; const pool = await getPool(); const request = pool.request().input('id', sql.Int, id); if (data.name !== undefined) { sets.push('name=@name'); request.input('name', sql.NVarChar(200), data.name); } if (data.email !== undefined) { sets.push('email=@email'); request.input('email', sql.NVarChar(200), data.email); } if (data.phone !== undefined) { sets.push('phone=@phone'); request.input('phone', sql.NVarChar(60), data.phone); } if (data.role !== undefined) { sets.push('role=@role'); request.input('role', sql.NVarChar(100), data.role); } if (!sets.length) return badRequest(res,'No fields to update'); const result = await request.query(`UPDATE app.client_contacts SET ${sets.join(', ')} WHERE contact_id=@id`); if (result.rowsAffected[0]===0) return notFound(res); const read = await pool.request().input('id', sql.Int, id).query(`SELECT contact_id, client_id, name, email, phone, role FROM app.client_contacts WHERE contact_id=@id`); ok(res, read.recordset[0]); }));
+router.post(
+	'/',
+	asyncHandler(async (req, res) => {
+		const parsed = ClientContactCreate.safeParse(req.body);
+		if (!parsed.success) return badRequest(res, parsed.error.issues.map((i) => i.message).join('; '));
+		const { client_id, first_name = null, last_name = null, email = null, phone = null, title = null, is_primary = false, is_active = true } = parsed.data;
+		const pool = await getPool();
+		await pool
+			.request()
+			.input('client_id', sql.Int, client_id)
+			.input('first_name', sql.NVarChar(100), first_name)
+			.input('last_name', sql.NVarChar(100), last_name)
+			.input('email', sql.NVarChar(200), email)
+			.input('phone', sql.NVarChar(60), phone)
+			.input('title', sql.NVarChar(200), title)
+			.input('is_primary', sql.Bit, is_primary ? 1 : 0)
+			.input('is_active', sql.Bit, is_active ? 1 : 0)
+			.query(
+				`INSERT INTO app.client_contacts (client_id, first_name, last_name, email, phone, title, is_primary, is_active)
+				 VALUES (@client_id, @first_name, @last_name, @email, @phone, @title, @is_primary, @is_active)`
+			);
+		const read = await pool.request().query(`SELECT TOP 1 contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts ORDER BY contact_id DESC`);
+		ok(res, read.recordset[0], 201);
+	})
+);
+
+router.get(
+	'/:id',
+	asyncHandler(async (req, res) => {
+		const id = Number(req.params.id);
+		if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+		const pool = await getPool();
+		const r = await pool.request().input('id', sql.Int, id).query(`SELECT contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts WHERE contact_id=@id`);
+		const row = r.recordset[0];
+		if (!row) return notFound(res);
+		ok(res, row);
+	})
+);
+
+router.put(
+	'/:id',
+	asyncHandler(async (req, res) => {
+		const id = Number(req.params.id);
+		if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+		const parsed = ClientContactUpdate.safeParse(req.body);
+		if (!parsed.success) return badRequest(res, parsed.error.issues.map((i) => i.message).join('; '));
+		const data = parsed.data;
+		const sets: string[] = [];
+		const pool = await getPool();
+		const request = pool.request().input('id', sql.Int, id);
+		if (data.first_name !== undefined) { sets.push('first_name=@first_name'); request.input('first_name', sql.NVarChar(100), data.first_name); }
+		if (data.last_name !== undefined) { sets.push('last_name=@last_name'); request.input('last_name', sql.NVarChar(100), data.last_name); }
+		if (data.email !== undefined) { sets.push('email=@email'); request.input('email', sql.NVarChar(200), data.email); }
+		if (data.phone !== undefined) { sets.push('phone=@phone'); request.input('phone', sql.NVarChar(60), data.phone); }
+		if (data.title !== undefined) { sets.push('title=@title'); request.input('title', sql.NVarChar(200), data.title); }
+		if (data.is_primary !== undefined) { sets.push('is_primary=@is_primary'); request.input('is_primary', sql.Bit, data.is_primary ? 1 : 0); }
+		if (data.is_active !== undefined) { sets.push('is_active=@is_active'); request.input('is_active', sql.Bit, data.is_active ? 1 : 0); }
+		if (!sets.length) return badRequest(res, 'No fields to update');
+		const result = await request.query(`UPDATE app.client_contacts SET ${sets.join(', ')} WHERE contact_id=@id`);
+		if (result.rowsAffected[0] === 0) return notFound(res);
+		const read = await pool.request().input('id', sql.Int, id).query(`SELECT contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts WHERE contact_id=@id`);
+		ok(res, read.recordset[0]);
+	})
+);
+
 router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res,'id must be int'); const pool = await getPool(); const r = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.client_contacts WHERE contact_id=@id`); if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] }); }));
+
 export default router;

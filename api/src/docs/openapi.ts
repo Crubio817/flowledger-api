@@ -154,6 +154,23 @@ const options: Options = {
           },
           required: ['client_id', 'client_name', 'is_active', 'created_utc']
         }
+        ,
+        ClientContact: {
+          type: 'object',
+          properties: {
+            contact_id: { type: 'integer' },
+            client_id: { type: 'integer' },
+            first_name: { type: 'string', nullable: true },
+            last_name: { type: 'string', nullable: true },
+            email: { type: 'string', nullable: true },
+            phone: { type: 'string', nullable: true },
+            title: { type: 'string', nullable: true },
+            is_primary: { type: 'boolean' },
+            is_active: { type: 'boolean' },
+            created_utc: { type: 'string', format: 'date-time', nullable: true },
+            updated_utc: { type: 'string', format: 'date-time', nullable: true }
+          }
+        }
       }
     }
   },

@@ -188,50 +188,79 @@ router.post(
   const body = parsed.data as Record<string, unknown>;
     const request = pool.request();
     // Bind inputs
+    // Bind inputs and outputs where possible so driver populates result.output
     for (const p of params) {
       const key = p.param_name.replace(/^@/, '');
-      if (p.is_output) continue; // skip output for now (tedious driver output params different)
+      const typeName = p.type_name;
+      // helper to map SQL type name -> mssql type
+      const mapType = (tn: string) => {
+        switch (tn) {
+          case 'bit': return sql.Bit;
+          case 'int': return sql.Int;
+          case 'bigint': return sql.BigInt;
+          case 'nvarchar': return p.max_length === -1 ? sql.NVarChar(sql.MAX) : sql.NVarChar(p.max_length);
+          case 'varchar': return p.max_length === -1 ? sql.VarChar(sql.MAX) : sql.VarChar(p.max_length);
+          case 'datetime2': return sql.DateTime2;
+          case 'datetimeoffset': return sql.DateTimeOffset;
+          default: return undefined as any;
+        }
+      };
+
+      const mapped = mapType(typeName);
+      if (p.is_output) {
+        // register as output param if type known, otherwise register without explicit type
+        if (mapped) request.output(key, mapped as any);
+        else request.output(key, sql.NVarChar(sql.MAX));
+        continue;
+      }
+
+      // requiredness check
       if (body[key] === undefined && !p.has_default_value) {
         return badRequest(res, `Missing required field: ${key}`);
       }
+
       if (body[key] !== undefined) {
-        // Basic type mapping
-        let val = body[key];
-        switch (p.type_name) {
-          case 'bit':
-            val = !!val;
-            request.input(key, sql.Bit, val ? 1 : 0);
-            break;
-          case 'int':
-          case 'bigint':
-            if (val === null || val === undefined || val === '') { return badRequest(res, `Param ${key} must be number`); }
-            request.input(key, sql.Int, Number(val));
-            break;
-          case 'nvarchar':
-          case 'varchar':
-            request.input(key, sql.NVarChar(p.max_length === -1 ? sql.MAX : p.max_length), String(val));
-            break;
-          case 'datetime2':
-          case 'datetimeoffset':
-            request.input(key, sql.DateTime2, val as any);
-            break;
-          default:
-            request.input(key, body[key] as any);
+        const val = body[key];
+        if (typeName === 'bit') {
+          request.input(key, sql.Bit, !!val ? 1 : 0);
+        } else if (typeName === 'int' || typeName === 'bigint') {
+          if (val === null || val === undefined || val === '') return badRequest(res, `Param ${key} must be number`);
+          request.input(key, typeName === 'bigint' ? sql.BigInt : sql.Int, Number(val));
+        } else if (typeName === 'nvarchar' || typeName === 'varchar') {
+          request.input(key, mapped || sql.NVarChar(p.max_length === -1 ? sql.MAX : p.max_length), String(val));
+        } else if (typeName === 'datetime2' || typeName === 'datetimeoffset') {
+          request.input(key, mapped || sql.DateTime2, val as any);
+        } else {
+          request.input(key, body[key] as any);
         }
       }
     }
     const result = await request.execute('app.sp_create_client');
-  let clientRow: any = null;
-  // Try to infer client_id from first recordset row (several possible column names) or return value
-  const first = result.recordset && result.recordset[0];
-    let clientId = first && (first.client_id || first.new_client_id || first.id);
+    let clientRow: any = null;
+
+    // Include driver-populated output params in proc_result
+    const proc_result: any = { recordset: result.recordset, returnValue: result.returnValue, output: result.output };
+
+    // Try to infer client_id from multiple places: first recordset row, output params, returnValue
+    const first = result.recordset && result.recordset[0];
+    let clientId: any = first && (first.client_id || first.new_client_id || first.id);
+    if (!clientId && result.output) {
+      // common output names
+      clientId = result.output.new_client_id || result.output.client_id || result.output.id;
+    }
     if (!clientId && typeof result.returnValue === 'number') clientId = result.returnValue;
     if (typeof clientId === 'string' && /^\d+$/.test(clientId)) clientId = Number(clientId);
+
+    // Choose appropriate SQL type for reading the client row
     if (typeof clientId === 'number') {
-      const read = await pool.request().input('id', sql.BigInt, clientId).query(`SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id=@id`);
+      // prefer bigint if metadata says so
+      const idParamMeta = params.find(p => p.param_name.replace(/^@/, '') === 'client_id' || p.param_name.replace(/^@/, '') === 'new_client_id');
+      const idSqlType = idParamMeta && idParamMeta.type_name === 'bigint' ? sql.BigInt : sql.Int;
+      const read = await pool.request().input('id', idSqlType, clientId).query(`SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id=@id`);
       clientRow = read.recordset[0] || null;
     }
-    ok(res, { client: clientRow, proc_result: { recordset: result.recordset, returnValue: result.returnValue } });
+
+    ok(res, { client: clientRow, proc_result });
   })
 );
 

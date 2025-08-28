@@ -12,6 +12,8 @@ import clientLocations from './routes/client_locations';
 import clientContacts from './routes/client_contacts';
 import clientOnboarding from './routes/client_onboarding_tasks';
 import clientDocuments from './routes/client_documents';
+import clientTags from './routes/client_tags';
+import clientTagMap from './routes/client_tag_map';
 import auditSipoc from './routes/audit_sipoc';
 import interviews from './routes/interviews';
 import interviewResponses from './routes/interview_responses';
@@ -20,9 +22,11 @@ import processMaps from './routes/process_maps';
 import auto from './routes/auto';
 import { setupOpenApi } from './docs/openapi';
 
-assertConfig();
-
-const app = express();
+async function start() {
+  // If KeyVault is configured, hydrate secrets first
+  try { await (await import('./config/env')).loadKeyVaultSecrets(); } catch (e) { /* ignore */ }
+  (await import('./config/env')).assertConfig();
+  const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
@@ -66,12 +70,18 @@ app.use('/api/client-locations', clientLocations);
 app.use('/api/client-contacts', clientContacts);
 app.use('/api/client-onboarding-tasks', clientOnboarding);
 app.use('/api/client-documents', clientDocuments);
+app.use('/api/client-tags', clientTags);
+app.use('/api/client-tag-map', clientTagMap);
 
 app.use(errorHandler);
 
 // OpenAPI (must be after routes so annotations are picked up by scanner)
 setupOpenApi(app);
 
-app.listen(env.port, () => {
-  console.log(`API listening on http://localhost:${env.port} (sql.auth=${env.sql.auth})`);
-});
+  const { env } = await import('./config/env');
+  app.listen(env.port, () => {
+    console.log(`API listening on http://localhost:${env.port} (sql.auth=${env.sql.auth})`);
+  });
+}
+
+start().catch(err => { console.error('Failed to start server', err); process.exit(1); });
