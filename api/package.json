@@ -11,13 +11,13 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint .",
-  "db:ping": "node scripts/db-ping.cjs",
-  "db:schema": "ts-node scripts/schema-introspect.ts",
-  "gen:api:snapshot": "curl -s ${SPEC_URL:-http://localhost:4000/openapi.json} > openapi.snapshot.json"
+    "db:ping": "node scripts/db-ping.cjs",
+    "db:schema": "ts-node scripts/schema-introspect.ts",
+    "gen:api:snapshot": "curl -s ${SPEC_URL:-http://localhost:4000/openapi.json} > openapi.snapshot.json"
   },
   "dependencies": {
     "@azure/identity": "^4.11.1",
-  "@azure/keyvault-secrets": "^4.10.1",
+    "@azure/keyvault-secrets": "^4.10.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -38,6 +38,8 @@
     "@types/node": "^20.14.10",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
     "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",

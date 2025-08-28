@@ -4,7 +4,7 @@ import type { ConnectionPool, config as SqlConfig } from 'mssql';
 // We conditionally import @azure/identity only when needed to avoid hard dependency at runtime if not installed
 let getAccessToken: (() => Promise<string>) | null = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   const identity = require('@azure/identity') as typeof import('@azure/identity');
   getAccessToken = async () => {
   const { DefaultAzureCredential, ManagedIdentityCredential } = identity as any;
@@ -86,7 +86,7 @@ export async function getPool(): Promise<ConnectionPool> {
 
   // Brief startup log (non-sensitive)
   if (!pool) {
-    // eslint-disable-next-line no-console
+     
     console.log(`[db] Connecting using auth=${authMode}${authMode === 'sql' ? ` user=${env.sql.user}` : env.azure.managedIdentityClientId ? ` miClientId=${env.azure.managedIdentityClientId}` : ''}`);
   }
   pool = await sql.connect(cfg);

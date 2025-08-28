@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { env, assertConfig } from './config/env';
+// config/env is imported dynamically to allow Key Vault secret hydration before assertions
 import { errorHandler } from './middleware/error';
 import clients from './routes/clients';
 import audits from './routes/audits';
@@ -24,7 +24,7 @@ import { setupOpenApi } from './docs/openapi';
 
 async function start() {
   // If KeyVault is configured, hydrate secrets first
-  try { await (await import('./config/env')).loadKeyVaultSecrets(); } catch (e) { /* ignore */ }
+  try { await (await import('./config/env')).loadKeyVaultSecrets(); } catch { /* ignore */ }
   (await import('./config/env')).assertConfig();
   const app = express();
 app.use(helmet());

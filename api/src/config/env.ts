@@ -104,7 +104,7 @@ export async function loadKeyVaultSecrets() {
   // so that callers who read `env` after loadKeyVaultSecrets see updated values.
   // Update jwtSecret and SQL connection pieces if newly set on process.env.
   if (process.env.JWT_SECRET) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (env as any).jwtSecret = process.env.JWT_SECRET;
   }
   if (process.env.SQL_SERVER) {
