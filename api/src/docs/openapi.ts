@@ -182,35 +182,65 @@ const options: Options = {
 export function setupOpenApi(app: Express) {
   // If a generated snapshot exists (openapi.snapshot.json) prefer serving it so manual
   // edits are visible in Swagger UI (useful for local testing and CI snapshots).
-  const snapshotPath = path.resolve(__dirname, '../../openapi.snapshot.json');
+  // Try multiple locations for the snapshot/additions files. In deployed builds the
+  // compiled JS lives under `dist/` so files may be placed next to the repo root
+  // instead of next to the compiled code. Check both locations and log which one
+  // we used so it's easier to debug "No operations defined in spec" in production.
+  const candidates = [
+    path.resolve(__dirname, '../../openapi.snapshot.json'), // next to compiled code (dist/openapi.snapshot.json)
+    path.resolve(process.cwd(), 'openapi.snapshot.json'), // repo root / runtime cwd
+    path.resolve(process.cwd(), 'api', 'openapi.snapshot.json') // repo api folder
+  ];
+
   let spec: any;
-  if (fs.existsSync(snapshotPath)) {
-    try {
-      const raw = fs.readFileSync(snapshotPath, 'utf8');
-      spec = JSON.parse(raw);
-      // If an additions file exists, merge its paths/components into the snapshot so
-      // small manual additions don't require editing the large generated snapshot.
-      const additionsPath = path.resolve(__dirname, '../../openapi.additions.json');
-      if (fs.existsSync(additionsPath)) {
-        try {
-          const addRaw = fs.readFileSync(additionsPath, 'utf8');
-          const adds = JSON.parse(addRaw);
-          spec.paths = Object.assign({}, spec.paths || {}, adds.paths || {});
-          if (adds.components && adds.components.schemas) {
-            spec.components = spec.components || {};
-            spec.components.schemas = Object.assign({}, spec.components.schemas || {}, adds.components.schemas || {});
-          }
-        } catch (e) {
-          console.warn('Failed to merge openapi.additions.json', e);
-        }
+  let usedSnapshot: string | null = null;
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      try {
+        const raw = fs.readFileSync(p, 'utf8');
+        spec = JSON.parse(raw);
+        usedSnapshot = p;
+        break;
+      } catch (err) {
+        console.warn('Failed to parse candidate openapi.snapshot.json at', p, err);
       }
-    } catch (err) {
-      // if parsing fails, fall back to generated spec
-      console.warn('Failed to read openapi.snapshot.json, falling back to swagger-jsdoc', err);
-      spec = swaggerJSDoc(options);
     }
-  } else {
+  }
+
+  if (!spec) {
+    // No snapshot found or all failed to parse — fall back to swagger-jsdoc generated spec
     spec = swaggerJSDoc(options);
+    console.warn('No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.');
+  }
+
+  // Merge additions from plausible locations (prefer same directory resolution strategy)
+  const additionsCandidates = [
+    path.resolve(__dirname, '../../openapi.additions.json'),
+    path.resolve(process.cwd(), 'openapi.additions.json'),
+    path.resolve(process.cwd(), 'api', 'openapi.additions.json')
+  ];
+
+  for (const aPath of additionsCandidates) {
+    if (fs.existsSync(aPath)) {
+      try {
+        const addRaw = fs.readFileSync(aPath, 'utf8');
+        const adds = JSON.parse(addRaw);
+        spec.paths = Object.assign({}, spec.paths || {}, adds.paths || {});
+        if (adds.components && adds.components.schemas) {
+          spec.components = spec.components || {};
+          spec.components.schemas = Object.assign({}, spec.components.schemas || {}, adds.components.schemas || {});
+        }
+        console.info('Merged OpenAPI additions from', aPath);
+        break; // merge first found additions file
+      } catch (e) {
+        console.warn('Failed to merge openapi.additions.json at', aPath, e);
+      }
+    }
+  }
+
+  if (usedSnapshot) {
+    console.info('Serving openapi snapshot from', usedSnapshot);
   }
   app.get('/openapi.json', (_req, res) => res.json(spec));
   app.use('/api/docs', swaggerServe, swaggerSetup(spec));

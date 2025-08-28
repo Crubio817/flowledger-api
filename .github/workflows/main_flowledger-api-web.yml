@@ -30,6 +30,11 @@ jobs:
         working-directory: ./api
         run: npm run build
 
+      - name: Merge OpenAPI additions into snapshot (api)
+        working-directory: ./api
+        run: |
+          node ./scripts/merge-openapi-additions.cjs
+
       - name: Package app (zip dist + package.json)
         run: |
           rm -f deploy.zip || true
@@ -43,6 +48,9 @@ jobs:
           npm prune --omit=dev --no-audit --no-fund || true
           # copy compiled output
           cp -R dist ../deploy_tmp/
+          # include openapi snapshot and additions so the running app can serve the full spec
+          if [ -f openapi.snapshot.json ]; then cp openapi.snapshot.json ../deploy_tmp/; fi
+          if [ -f openapi.additions.json ]; then cp openapi.additions.json ../deploy_tmp/; fi
           # create node_modules tarball to satisfy Oryx startup (expects node_modules.tar.gz)
           tar -czf ../deploy_tmp/node_modules.tar.gz -C node_modules .
           # write minimal runtime package.json (no build script)
