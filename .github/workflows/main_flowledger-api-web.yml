@@ -47,7 +47,10 @@ jobs:
           tar -czf ../deploy_tmp/node_modules.tar.gz -C node_modules .
           # write minimal runtime package.json (no build script)
           printf '{\n  "name": "flowledger-api",\n  "version": "0.1.0",\n  "main": "dist/server.js",\n  "engines": { "node": "20.x" },\n  "scripts": { "start": "node dist/server.js" }\n}\n' > ../deploy_tmp/package.json
-          # zip the prepared deploy_tmp folder contents (dist + node_modules + runtime package.json)
+          # debug: verify package contents before zipping
+          echo "Contents of deploy_tmp:" && ls -lah ../deploy_tmp
+          if [ -f ../deploy_tmp/node_modules.tar.gz ]; then ls -lh ../deploy_tmp/node_modules.tar.gz; else echo "node_modules.tar.gz missing"; fi
+          # zip the prepared deploy_tmp folder contents (dist + node_modules tarball + runtime package.json)
           cd ../deploy_tmp
           zip -r ../deploy.zip . >/dev/null
           cd ..
@@ -59,6 +62,7 @@ jobs:
           pwd
           ls -la "$GITHUB_WORKSPACE" || true
           if [ -f "$GITHUB_WORKSPACE/deploy.zip" ]; then echo "deploy.zip exists:"; ls -lh "$GITHUB_WORKSPACE/deploy.zip"; else echo "deploy.zip not found in workspace"; fi
+          if command -v unzip >/dev/null 2>&1; then echo "Listing deploy.zip (top-level):"; unzip -l "$GITHUB_WORKSPACE/deploy.zip" | sed -n '1,30p'; fi
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
