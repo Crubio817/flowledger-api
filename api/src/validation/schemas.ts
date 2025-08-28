@@ -126,6 +126,40 @@ export const ClientTagMapCreate = ClientTagMapSchema;
 export type ClientTag = z.infer<typeof ClientTagSchema>;
 export type ClientTagMap = z.infer<typeof ClientTagMapSchema>;
 
+// Interviews
+export const InterviewSchema = z.object({
+  interview_id: z.number().int().nonnegative().optional(),
+  audit_id: z.number().int().nonnegative(),
+  persona: z.string().min(1).max(120),
+  mode: z.string().max(40).nullable().optional(),
+  scheduled_utc: z.coerce.date().nullable().optional(),
+  status: z.string().max(40).optional(),
+  notes: z.string().nullable().optional()
+});
+export const InterviewCreateBody = InterviewSchema.pick({ interview_id: true, audit_id: true, persona: true, mode: true, scheduled_utc: true, status: true, notes: true });
+export const InterviewUpdateBody = InterviewSchema.pick({ persona: true, mode: true, scheduled_utc: true, status: true, notes: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+// Interview responses
+export const InterviewResponseSchema = z.object({
+  response_id: z.number().int().nonnegative().optional(),
+  interview_id: z.number().int().nonnegative(),
+  question_id: z.string().min(1).max(64),
+  answer: z.string().min(1)
+});
+export const InterviewResponseCreateBody = InterviewResponseSchema.pick({ response_id: true, interview_id: true, question_id: true, answer: true });
+export const InterviewResponseUpdateBody = InterviewResponseSchema.pick({ question_id: true, answer: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+// Process maps
+export const ProcessMapSchema = z.object({
+  process_map_id: z.number().int().nonnegative().optional(),
+  audit_id: z.number().int().nonnegative(),
+  title: z.string().max(200).nullable().optional(),
+  blob_path: z.string().min(1).max(400),
+  file_type: z.string().max(40).nullable().optional()
+});
+export const ProcessMapCreateBody = ProcessMapSchema.pick({ process_map_id: true, audit_id: true, title: true, blob_path: true, file_type: true });
+export const ProcessMapUpdateBody = ProcessMapSchema.pick({ title: true, blob_path: true, file_type: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
 // Social profiles
 export const ContactSocialProfileSchema = z.object({
   id: z.number().int().nonnegative().optional(),

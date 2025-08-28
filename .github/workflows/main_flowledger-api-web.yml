@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: deploy.zip
+          path: ${{ github.workspace }}/deploy.zip
           if-no-files-found: error
 
   deploy:
