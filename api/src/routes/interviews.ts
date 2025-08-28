@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
+import { InterviewCreateBody, InterviewUpdateBody } from '../validation/schemas';
 
 const router = Router();
 
@@ -81,63 +82,47 @@ router.get(
   })
 );
 
-router.post(
-  '/',
-  asyncHandler(async (req, res) => {
-    const { interview_id, audit_id, persona, mode = null, scheduled_utc = null, status = null, notes = null } = req.body || {};
-    if (typeof interview_id !== 'number' || typeof audit_id !== 'number' || typeof persona !== 'string')
-      return badRequest(res, 'interview_id (number), audit_id (number), persona (string) required');
-    if (!(await auditExists(audit_id))) return badRequest(res, 'audit_id does not exist');
-    const pool = await getPool();
-    await pool
-      .request()
-      .input('interview_id', sql.Int, interview_id)
-      .input('audit_id', sql.Int, audit_id)
-      .input('persona', sql.NVarChar(120), persona)
-      .input('mode', sql.NVarChar(40), mode)
-      .input('scheduled_utc', sql.DateTimeOffset, scheduled_utc)
-      .input('status', sql.NVarChar(40), status)
-      .input('notes', sql.NVarChar(sql.MAX), notes)
-      .query(
-        `INSERT INTO app.interviews (interview_id, audit_id, persona, mode, scheduled_utc, status, notes)
-         VALUES (@interview_id, @audit_id, @persona, @mode, @scheduled_utc, COALESCE(@status, N'Planned'), @notes)`
-      );
-    const r = await pool.request().input('id', sql.Int, interview_id).query(
-      `SELECT interview_id, audit_id, persona, mode, scheduled_utc, status, notes, created_utc, updated_utc
-       FROM app.interviews WHERE interview_id = @id`
-    );
-    ok(res, r.recordset[0], 201);
-  })
-);
+router.post('/', asyncHandler(async (req, res) => {
+  const parsed = InterviewCreateBody.safeParse(req.body);
+  if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('; '));
+  const { interview_id, audit_id, persona, mode = null, scheduled_utc = null, status = null, notes = null } = parsed.data as any;
+  if (!(await auditExists(audit_id))) return badRequest(res, 'audit_id does not exist');
+  const pool = await getPool();
+  const result = await pool.request()
+    .input('interview_id', sql.Int, interview_id)
+    .input('audit_id', sql.Int, audit_id)
+    .input('persona', sql.NVarChar(120), persona)
+    .input('mode', sql.NVarChar(40), mode)
+    .input('scheduled_utc', sql.DateTimeOffset, scheduled_utc)
+    .input('status', sql.NVarChar(40), status)
+    .input('notes', sql.NVarChar(sql.MAX), notes)
+    .query(`INSERT INTO app.interviews (interview_id, audit_id, persona, mode, scheduled_utc, status, notes)
+            OUTPUT INSERTED.interview_id, INSERTED.audit_id, INSERTED.persona, INSERTED.mode, INSERTED.scheduled_utc, INSERTED.status, INSERTED.notes, INSERTED.created_utc, INSERTED.updated_utc
+            VALUES (@interview_id, @audit_id, @persona, @mode, @scheduled_utc, COALESCE(@status, N'Planned'), @notes)`);
+  ok(res, result.recordset[0], 201);
+}));
 
-router.put(
-  '/:interview_id',
-  asyncHandler(async (req, res) => {
-    const interviewId = Number(req.params.interview_id);
-    if (!Number.isInteger(interviewId) || interviewId <= 0) return badRequest(res, 'interview_id must be a positive integer');
-    const sets: string[] = [];
-    const pool = await getPool();
-    const request = pool.request().input('id', sql.Int, interviewId);
-
-    if (typeof req.body.persona === 'string') { sets.push('persona = @persona'); request.input('persona', sql.NVarChar(120), req.body.persona); }
-    if (typeof req.body.mode === 'string' || req.body.mode === null) { sets.push('mode = @mode'); request.input('mode', sql.NVarChar(40), req.body.mode); }
-    if (typeof req.body.scheduled_utc === 'string' || req.body.scheduled_utc === null) { sets.push('scheduled_utc = @scheduled_utc'); request.input('scheduled_utc', sql.DateTimeOffset, req.body.scheduled_utc); }
-    if (typeof req.body.status === 'string') { sets.push('status = @status'); request.input('status', sql.NVarChar(40), req.body.status); }
-    if (typeof req.body.notes === 'string' || req.body.notes === null) { sets.push('notes = @notes'); request.input('notes', sql.NVarChar(sql.MAX), req.body.notes); }
-
-    if (!sets.length) return badRequest(res, 'No fields to update');
-    sets.push('updated_utc = SYSUTCDATETIME()');
-
+router.put('/:interview_id', asyncHandler(async (req, res) => {
+  const interviewId = Number(req.params.interview_id);
+  if (!Number.isInteger(interviewId) || interviewId <= 0) return badRequest(res, 'interview_id must be a positive integer');
+  const parsed = InterviewUpdateBody.safeParse(req.body);
+  if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('; '));
+  const data = parsed.data as any;
+  const sets: string[] = [];
+  const pool = await getPool();
+  const request = pool.request().input('id', sql.Int, interviewId);
+  if (data.persona !== undefined) { sets.push('persona = @persona'); request.input('persona', sql.NVarChar(120), data.persona); }
+  if (data.mode !== undefined) { sets.push('mode = @mode'); request.input('mode', sql.NVarChar(40), data.mode); }
+  if (data.scheduled_utc !== undefined) { sets.push('scheduled_utc = @scheduled_utc'); request.input('scheduled_utc', sql.DateTimeOffset, data.scheduled_utc); }
+  if (data.status !== undefined) { sets.push('status = @status'); request.input('status', sql.NVarChar(40), data.status); }
+  if (data.notes !== undefined) { sets.push('notes = @notes'); request.input('notes', sql.NVarChar(sql.MAX), data.notes); }
+  if (!sets.length) return badRequest(res, 'No fields to update');
+  sets.push('updated_utc = SYSUTCDATETIME()');
   const result = await request.query(`UPDATE app.interviews SET ${sets.join(', ')} WHERE interview_id = @id`);
   if (result.rowsAffected[0] === 0) return notFound(res);
-
-    const r = await pool.request().input('id', sql.Int, interviewId).query(
-      `SELECT interview_id, audit_id, persona, mode, scheduled_utc, status, notes, created_utc, updated_utc
-       FROM app.interviews WHERE interview_id = @id`
-    );
-    ok(res, r.recordset[0]);
-  })
-);
+  const r = await pool.request().input('id', sql.Int, interviewId).query(`SELECT interview_id, audit_id, persona, mode, scheduled_utc, status, notes, created_utc, updated_utc FROM app.interviews WHERE interview_id = @id`);
+  ok(res, r.recordset[0]);
+}));
 
 router.delete(
   '/:interview_id',
