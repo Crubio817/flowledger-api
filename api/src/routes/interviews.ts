@@ -69,7 +69,7 @@ router.get(
   '/:interview_id',
   asyncHandler(async (req, res) => {
     const interviewId = Number(req.params.interview_id);
-    if (Number.isNaN(interviewId)) return badRequest(res, 'interview_id must be int');
+    if (!Number.isInteger(interviewId) || interviewId <= 0) return badRequest(res, 'interview_id must be a positive integer');
     const pool = await getPool();
     const r = await pool.request().input('id', sql.Int, interviewId).query(
       `SELECT interview_id, audit_id, persona, mode, scheduled_utc, status, notes, created_utc, updated_utc
@@ -114,7 +114,7 @@ router.put(
   '/:interview_id',
   asyncHandler(async (req, res) => {
     const interviewId = Number(req.params.interview_id);
-    if (Number.isNaN(interviewId)) return badRequest(res, 'interview_id must be int');
+    if (!Number.isInteger(interviewId) || interviewId <= 0) return badRequest(res, 'interview_id must be a positive integer');
     const sets: string[] = [];
     const pool = await getPool();
     const request = pool.request().input('id', sql.Int, interviewId);
@@ -143,7 +143,7 @@ router.delete(
   '/:interview_id',
   asyncHandler(async (req, res) => {
     const interviewId = Number(req.params.interview_id);
-    if (Number.isNaN(interviewId)) return badRequest(res, 'interview_id must be int');
+    if (!Number.isInteger(interviewId) || interviewId <= 0) return badRequest(res, 'interview_id must be a positive integer');
     const pool = await getPool();
     try {
       const result = await pool.request().input('id', sql.Int, interviewId).query(
@@ -152,7 +152,7 @@ router.delete(
   if (result.rowsAffected[0] === 0) return notFound(res);
       ok(res, { deleted: result.rowsAffected[0] });
     } catch (e: any) {
-      res.status(409).json({ status: 'error', data: null, error: e.message });
+      res.status(409).json({ error: { code: 'Conflict', message: e?.message || 'Conflict' } });
     }
   })
 );

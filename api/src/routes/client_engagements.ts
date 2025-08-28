@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
-import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
+import { asyncHandler, badRequest, ok, listOk, notFound, getPagination } from '../utils/http';
 import { ClientEngagementCreate, ClientEngagementUpdate } from '../validation/schemas';
 
 const router = Router();
@@ -74,10 +74,22 @@ const router = Router();
  */
 
 router.get('/', asyncHandler(async (req, res) => {
-  const { page, limit, offset } = (await import('../utils/http')).getPagination(req);
+  const { page, limit, offset } = getPagination(req);
   const pool = await getPool();
-  const r = await pool.request().input('offset', sql.Int, offset).input('limit', sql.Int, limit).query(`SELECT engagement_id, client_id, title, start_date, end_date, status FROM app.client_engagements ORDER BY engagement_id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
-  listOk(res, r.recordset, { page, limit, total: r.recordset.length });
+  const r = await pool.request()
+    .input('offset', sql.Int, offset)
+    .input('limit', sql.Int, limit)
+    .query(`
+      SELECT engagement_id, client_id, title, start_date, end_date, status,
+             COUNT(*) OVER() AS total
+      FROM app.client_engagements
+      ORDER BY engagement_id
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
+  const total = r.recordset[0]?.total ?? 0;
+  const items = r.recordset.map((row: any) => {
+    const { total: _t, ...rest } = row; return rest;
+  });
+  listOk(res, items, { page, limit, total });
 }));
 
 /**
@@ -169,7 +181,7 @@ router.get('/', asyncHandler(async (req, res) => {
  *                     deleted: { type: integer }
  */
 router.get('/:id', asyncHandler(async (req, res) => {
-  const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+  const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
   const pool = await getPool();
   const r = await pool.request().input('id', sql.Int, id).query(`SELECT engagement_id, client_id, title, start_date, end_date, status FROM app.client_engagements WHERE engagement_id=@id`);
   const row = r.recordset[0]; if (!row) return notFound(res); ok(res, row);
@@ -177,15 +189,23 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 router.post('/', asyncHandler(async (req, res) => {
   const parsed = ClientEngagementCreate.safeParse(req.body); if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
-  const { client_id, title, start_date = null, end_date = null, status = null } = parsed.data;
+  const { client_id, title, start_date = null, end_date = null, status = null } = parsed.data as any;
   const pool = await getPool();
-  await pool.request().input('client_id', sql.Int, client_id).input('title', sql.NVarChar(200), title).input('start_date', sql.DateTime2, start_date).input('end_date', sql.DateTime2, end_date).input('status', sql.NVarChar(40), status).query(`INSERT INTO app.client_engagements (client_id, title, start_date, end_date, status) VALUES (@client_id, @title, @start_date, @end_date, @status); SELECT SCOPE_IDENTITY() AS id;`);
-  const id = (await pool.request().query('SELECT TOP 1 engagement_id, client_id, title, start_date, end_date, status FROM app.client_engagements ORDER BY engagement_id DESC')).recordset[0];
-  ok(res, id, 201);
+  const result = await pool.request()
+    .input('client_id', sql.Int, client_id)
+    .input('title', sql.NVarChar(200), title)
+    .input('start_date', sql.DateTime2, start_date)
+    .input('end_date', sql.DateTime2, end_date)
+    .input('status', sql.NVarChar(40), status)
+    .query(`
+      INSERT INTO app.client_engagements (client_id, title, start_date, end_date, status)
+      OUTPUT INSERTED.engagement_id, INSERTED.client_id, INSERTED.title, INSERTED.start_date, INSERTED.end_date, INSERTED.status
+      VALUES (@client_id, @title, @start_date, @end_date, @status)`);
+  ok(res, result.recordset[0], 201);
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {
-  const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+  const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
   const parsed = ClientEngagementUpdate.safeParse(req.body); if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
   const data = parsed.data; const sets: string[] = [];
   const pool = await getPool(); const request = pool.request().input('id', sql.Int, id);
@@ -201,7 +221,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+  const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
   const pool = await getPool(); const r = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.client_engagements WHERE engagement_id=@id`);
   if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] });
 }));

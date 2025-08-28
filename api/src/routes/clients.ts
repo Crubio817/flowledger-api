@@ -63,7 +63,7 @@ router.get(
   '/:client_id',
   asyncHandler(async (req, res) => {
     const clientId = Number(req.params.client_id);
-    if (Number.isNaN(clientId)) return badRequest(res, 'client_id must be int');
+    if (!Number.isInteger(clientId) || clientId <= 0) return badRequest(res, 'client_id must be a positive integer');
     const pool = await getPool();
     const result = await pool.request().input('id', sql.Int, clientId).query(
       `SELECT client_id, name, is_active, created_utc
@@ -99,7 +99,7 @@ router.put(
   '/:client_id',
   asyncHandler(async (req, res) => {
     const clientId = Number(req.params.client_id);
-    if (Number.isNaN(clientId)) return badRequest(res, 'client_id must be int');
+    if (!Number.isInteger(clientId) || clientId <= 0) return badRequest(res, 'client_id must be a positive integer');
     const parsed = ClientUpdateBody.safeParse(req.body);
     if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
     const data = parsed.data;
@@ -122,7 +122,7 @@ router.delete(
   '/:client_id',
   asyncHandler(async (req, res) => {
     const clientId = Number(req.params.client_id);
-    if (Number.isNaN(clientId)) return badRequest(res, 'client_id must be int');
+    if (!Number.isInteger(clientId) || clientId <= 0) return badRequest(res, 'client_id must be a positive integer');
     const pool = await getPool();
     try {
       const result = await pool.request().input('id', sql.Int, clientId).query(
@@ -133,7 +133,7 @@ router.delete(
   ok(res, { deleted: result.rowsAffected[0] });
     } catch (e: any) {
       // Likely FK violation
-      res.status(409).json({ status: 'error', data: null, error: e.message });
+      res.status(409).json({ error: { code: 'Conflict', message: e?.message || 'Conflict' } });
     }
   })
 );

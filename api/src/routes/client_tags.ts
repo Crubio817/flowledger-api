@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
-import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
+import { asyncHandler, badRequest, ok, listOk, notFound, getPagination } from '../utils/http';
 import { ClientTagCreate, ClientTagUpdate } from '../validation/schemas';
 
 const router = Router();
@@ -23,10 +23,12 @@ const router = Router();
  *         description: Tags list
  */
 router.get('/', asyncHandler(async (req, res) => {
-  const { page, limit, offset } = (await import('../utils/http')).getPagination(req);
+  const { page, limit, offset } = getPagination(req);
   const pool = await getPool();
-  const r = await pool.request().input('offset', sql.Int, offset).input('limit', sql.Int, limit).query(`SELECT tag_id, tag_name FROM app.client_tags ORDER BY tag_id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
-  listOk(res, r.recordset, { page, limit, total: r.recordset.length });
+  const r = await pool.request().input('offset', sql.Int, offset).input('limit', sql.Int, limit).query(`SELECT tag_id, tag_name, COUNT(*) OVER() AS total FROM app.client_tags ORDER BY tag_id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
+  const total = r.recordset[0]?.total ?? 0;
+  const items = r.recordset.map((row:any)=>{ const { total: _t, ...rest } = row; return rest; });
+  listOk(res, items, { page, limit, total });
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
@@ -41,14 +43,14 @@ router.post('/', asyncHandler(async (req, res) => {
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
-  if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+  if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
   const pool = await getPool();
   const r = await pool.request().input('id', sql.Int, id).query(`SELECT tag_id, tag_name FROM app.client_tags WHERE tag_id=@id`);
   const row = r.recordset[0]; if (!row) return notFound(res); ok(res, row);
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {
-  const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+  const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
   const parsed = ClientTagUpdate.safeParse(req.body); if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
   const data = parsed.data; const sets: string[] = []; const pool = await getPool(); const request = pool.request().input('id', sql.Int, id);
   if (data.tag_name !== undefined) { sets.push('tag_name=@tag_name'); request.input('tag_name', sql.NVarChar(200), data.tag_name); }
@@ -59,6 +61,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
   ok(res, read.recordset[0]);
 }));
 
-router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res, 'id must be int'); const pool = await getPool(); const r = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.client_tags WHERE tag_id=@id`); if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] }); }));
+router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer'); const pool = await getPool(); const r = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.client_tags WHERE tag_id=@id`); if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] }); }));
 
 export default router;

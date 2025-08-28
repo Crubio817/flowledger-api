@@ -59,7 +59,7 @@ router.get(
   '/:process_map_id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.process_map_id);
-    if (Number.isNaN(id)) return badRequest(res, 'process_map_id must be int');
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'process_map_id must be a positive integer');
     const pool = await getPool();
     const r = await pool.request().input('id', sql.Int, id).query(
       `SELECT process_map_id, audit_id, title, blob_path, file_type, uploaded_utc
@@ -104,7 +104,7 @@ router.put(
   '/:process_map_id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.process_map_id);
-    if (Number.isNaN(id)) return badRequest(res, 'process_map_id must be int');
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'process_map_id must be a positive integer');
     const sets: string[] = [];
     const pool = await getPool();
     const request = pool.request().input('id', sql.Int, id);
@@ -128,7 +128,7 @@ router.delete(
   '/:process_map_id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.process_map_id);
-    if (Number.isNaN(id)) return badRequest(res, 'process_map_id must be int');
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'process_map_id must be a positive integer');
     const pool = await getPool();
     const result = await pool.request().input('id', sql.Int, id).query(
       `DELETE FROM app.process_maps WHERE process_map_id = @id`

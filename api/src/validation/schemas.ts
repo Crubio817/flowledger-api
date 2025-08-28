@@ -41,8 +41,8 @@ export const ClientEngagementSchema = z.object({
   engagement_id: z.number().int().nonnegative().optional(),
   client_id: z.number().int().nonnegative(),
   title: z.string().min(1).max(200),
-  start_date: z.string().nullable().optional(),
-  end_date: z.string().nullable().optional(),
+  start_date: z.coerce.date().nullable().optional(),
+  end_date: z.coerce.date().nullable().optional(),
   status: z.string().max(40).optional()
 });
 export const ClientEngagementCreate = ClientEngagementSchema.pick({ client_id: true, title: true, start_date: true, end_date: true, status: true });
@@ -89,7 +89,7 @@ export const OnboardingTaskSchema = z.object({
   client_id: z.number().int().nonnegative(),
   title: z.string().min(1).max(200),
   status: z.string().max(40).optional(),
-  due_date: z.string().nullable().optional()
+  due_date: z.coerce.date().nullable().optional()
 });
 export const OnboardingTaskCreate = OnboardingTaskSchema.pick({ client_id: true, title: true, status: true, due_date: true });
 export const OnboardingTaskUpdate = OnboardingTaskCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
@@ -139,4 +139,3 @@ export const ContactSocialProfileSchema = z.object({
 export const ContactSocialProfileCreate = ContactSocialProfileSchema.pick({ contact_id: true, provider: true, profile_url: true, is_primary: true });
 export const ContactSocialProfileUpdate = ContactSocialProfileCreate.partial().refine(d=>Object.keys(d).length>0, 'At least one field required');
 export type ContactSocialProfile = z.infer<typeof ContactSocialProfileSchema>;
-

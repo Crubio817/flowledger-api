@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
-import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
+import { asyncHandler, badRequest, ok, listOk, notFound, getPagination } from '../utils/http';
 import { ClientContactCreate, ClientContactUpdate } from '../validation/schemas';
 
 const router = Router();
@@ -82,21 +82,24 @@ const router = Router();
  *                     phone: { type: string }
  *                     title: { type: string }
  */
-router.get(
-	'/',
-	asyncHandler(async (req, res) => {
-		const { page, limit, offset } = (await import('../utils/http')).getPagination(req);
-		const pool = await getPool();
-		const r = await pool
-			.request()
-			.input('offset', sql.Int, offset)
-			.input('limit', sql.Int, limit)
-			.query(
-				`SELECT TOP (@limit) contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts ORDER BY contact_id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`
-			);
-		listOk(res, r.recordset, { page, limit, total: r.recordset.length });
-	})
-);
+router.get('/', asyncHandler(async (req, res) => {
+  const { page, limit, offset } = getPagination(req);
+  const pool = await getPool();
+  const r = await pool
+    .request()
+    .input('offset', sql.Int, offset)
+    .input('limit', sql.Int, limit)
+    .query(`
+      SELECT contact_id, client_id, first_name, last_name, email, phone, title,
+             is_primary, is_active, created_utc, updated_utc,
+             COUNT(*) OVER() AS total
+      FROM app.client_contacts
+      ORDER BY contact_id
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
+  const total = r.recordset[0]?.total ?? 0;
+  const items = r.recordset.map((row:any)=>{ const { total: _t, ...rest } = row; return rest; });
+  listOk(res, items, { page, limit, total });
+}));
 
 /**
  * @openapi
@@ -190,50 +193,43 @@ router.get(
  *                   properties:
  *                     deleted: { type: integer }
  */
-router.post(
-	'/',
-	asyncHandler(async (req, res) => {
-		const parsed = ClientContactCreate.safeParse(req.body);
-		if (!parsed.success) return badRequest(res, parsed.error.issues.map((i) => i.message).join('; '));
-		const { client_id, first_name = null, last_name = null, email = null, phone = null, title = null, is_primary = false, is_active = true } = parsed.data;
-		const pool = await getPool();
-		await pool
-			.request()
-			.input('client_id', sql.Int, client_id)
-			.input('first_name', sql.NVarChar(100), first_name)
-			.input('last_name', sql.NVarChar(100), last_name)
-			.input('email', sql.NVarChar(200), email)
-			.input('phone', sql.NVarChar(60), phone)
-			.input('title', sql.NVarChar(200), title)
-			.input('is_primary', sql.Bit, is_primary ? 1 : 0)
-			.input('is_active', sql.Bit, is_active ? 1 : 0)
-			.query(
-				`INSERT INTO app.client_contacts (client_id, first_name, last_name, email, phone, title, is_primary, is_active)
-				 VALUES (@client_id, @first_name, @last_name, @email, @phone, @title, @is_primary, @is_active)`
-			);
-		const read = await pool.request().query(`SELECT TOP 1 contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts ORDER BY contact_id DESC`);
-		ok(res, read.recordset[0], 201);
-	})
-);
+router.post('/', asyncHandler(async (req, res) => {
+  const parsed = ClientContactCreate.safeParse(req.body);
+  if (!parsed.success) return badRequest(res, parsed.error.issues.map((i) => i.message).join('; '));
+  const { client_id, first_name = null, last_name = null, email = null, phone = null, title = null, is_primary = false, is_active = true } = parsed.data;
+  const pool = await getPool();
+  const result = await pool
+    .request()
+    .input('client_id', sql.Int, client_id)
+    .input('first_name', sql.NVarChar(100), first_name)
+    .input('last_name', sql.NVarChar(100), last_name)
+    .input('email', sql.NVarChar(200), email)
+    .input('phone', sql.NVarChar(60), phone)
+    .input('title', sql.NVarChar(200), title)
+    .input('is_primary', sql.Bit, is_primary ? 1 : 0)
+    .input('is_active', sql.Bit, is_active ? 1 : 0)
+    .query(
+      `INSERT INTO app.client_contacts (client_id, first_name, last_name, email, phone, title, is_primary, is_active)
+       OUTPUT INSERTED.contact_id, INSERTED.client_id, INSERTED.first_name, INSERTED.last_name, INSERTED.email,
+              INSERTED.phone, INSERTED.title, INSERTED.is_primary, INSERTED.is_active, INSERTED.created_utc, INSERTED.updated_utc
+       VALUES (@client_id, @first_name, @last_name, @email, @phone, @title, @is_primary, @is_active)`
+    );
+  ok(res, result.recordset[0], 201);
+}));
 
-router.get(
-	'/:id',
-	asyncHandler(async (req, res) => {
-		const id = Number(req.params.id);
-		if (Number.isNaN(id)) return badRequest(res, 'id must be int');
-		const pool = await getPool();
-		const r = await pool.request().input('id', sql.Int, id).query(`SELECT contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts WHERE contact_id=@id`);
-		const row = r.recordset[0];
-		if (!row) return notFound(res);
-		ok(res, row);
-	})
-);
+router.get('/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
+  const pool = await getPool();
+  const r = await pool.request().input('id', sql.Int, id).query(`SELECT contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts WHERE contact_id=@id`);
+  const row = r.recordset[0];
+  if (!row) return notFound(res);
+  ok(res, row);
+}));
 
-router.put(
-	'/:id',
-	asyncHandler(async (req, res) => {
-		const id = Number(req.params.id);
-		if (Number.isNaN(id)) return badRequest(res, 'id must be int');
+router.put('/:id', asyncHandler(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
 		const parsed = ClientContactUpdate.safeParse(req.body);
 		if (!parsed.success) return badRequest(res, parsed.error.issues.map((i) => i.message).join('; '));
 		const data = parsed.data;
@@ -252,9 +248,8 @@ router.put(
 		if (result.rowsAffected[0] === 0) return notFound(res);
 		const read = await pool.request().input('id', sql.Int, id).query(`SELECT contact_id, client_id, first_name, last_name, email, phone, title, is_primary, is_active, created_utc, updated_utc FROM app.client_contacts WHERE contact_id=@id`);
 		ok(res, read.recordset[0]);
-	})
-);
+	}));
 
-router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (Number.isNaN(id)) return badRequest(res,'id must be int'); const pool = await getPool(); const r = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.client_contacts WHERE contact_id=@id`); if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] }); }));
+router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res,'id must be a positive integer'); const pool = await getPool(); const r = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.client_contacts WHERE contact_id=@id`); if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] }); }));
 
 export default router;

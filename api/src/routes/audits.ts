@@ -167,7 +167,7 @@ router.get(
   '/:audit_id',
   asyncHandler(async (req, res) => {
     const auditId = Number(req.params.audit_id);
-    if (Number.isNaN(auditId)) return badRequest(res, 'audit_id must be int');
+    if (!Number.isInteger(auditId) || auditId <= 0) return badRequest(res, 'audit_id must be a positive integer');
     const pool = await getPool();
     const result = await pool.request().input('id', sql.Int, auditId).query(
       `SELECT audit_id, client_id, title, scope, status, created_utc, updated_utc
@@ -205,7 +205,7 @@ router.put(
   '/:audit_id',
   asyncHandler(async (req, res) => {
     const auditId = Number(req.params.audit_id);
-    if (Number.isNaN(auditId)) return badRequest(res, 'audit_id must be int');
+    if (!Number.isInteger(auditId) || auditId <= 0) return badRequest(res, 'audit_id must be a positive integer');
     const parsed = AuditUpdateBody.safeParse(req.body);
     if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
     const data = parsed.data;
@@ -230,7 +230,7 @@ router.delete(
   '/:audit_id',
   asyncHandler(async (req, res) => {
     const auditId = Number(req.params.audit_id);
-    if (Number.isNaN(auditId)) return badRequest(res, 'audit_id must be int');
+    if (!Number.isInteger(auditId) || auditId <= 0) return badRequest(res, 'audit_id must be a positive integer');
     const pool = await getPool();
     try {
       const result = await pool.request().input('id', sql.Int, auditId).query(
@@ -240,7 +240,7 @@ router.delete(
   await logActivity({ type: 'AuditDeleted', title: `Audit ${auditId} deleted`, audit_id: auditId });
   ok(res, { deleted: result.rowsAffected[0] });
     } catch (e: any) {
-      res.status(409).json({ status: 'error', data: null, error: e.message });
+      res.status(409).json({ error: { code: 'Conflict', message: e?.message || 'Conflict' } });
     }
   })
 );

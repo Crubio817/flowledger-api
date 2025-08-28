@@ -59,7 +59,7 @@ router.get(
   '/:response_id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.response_id);
-    if (Number.isNaN(id)) return badRequest(res, 'response_id must be int');
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'response_id must be a positive integer');
     const pool = await getPool();
     const r = await pool.request().input('id', sql.Int, id).query(
       `SELECT response_id, interview_id, question_id, answer, created_utc
@@ -100,7 +100,7 @@ router.put(
   '/:response_id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.response_id);
-    if (Number.isNaN(id)) return badRequest(res, 'response_id must be int');
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'response_id must be a positive integer');
     const sets: string[] = [];
     const pool = await getPool();
     const request = pool.request().input('id', sql.Int, id);
@@ -124,7 +124,7 @@ router.delete(
   '/:response_id',
   asyncHandler(async (req, res) => {
     const id = Number(req.params.response_id);
-    if (Number.isNaN(id)) return badRequest(res, 'response_id must be int');
+    if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'response_id must be a positive integer');
     const pool = await getPool();
     const result = await pool.request().input('id', sql.Int, id).query(
       `DELETE FROM app.interview_responses WHERE response_id = @id`
