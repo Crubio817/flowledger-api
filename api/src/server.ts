@@ -21,6 +21,7 @@ import interviewResponses from './routes/interview_responses';
 import findings from './routes/findings';
 import processMaps from './routes/process_maps';
 import auto from './routes/auto';
+import ai from './routes/ai';
 import { setupOpenApi } from './docs/openapi';
 
 async function start() {
@@ -72,6 +73,7 @@ app.use('/api/interview-responses', interviewResponses);
 app.use('/api/findings', findings);
 app.use('/api/process-maps', processMaps);
 app.use('/api/auto', auto); // dynamic auto-generated endpoints (guarded by feature flag)
+app.use('/api/ai', ai);
 app.use('/api/client-engagements', clientEngagements);
 app.use('/api/client-integrations', clientIntegrations);
 app.use('/api/client-locations', clientLocations);
