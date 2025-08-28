@@ -65,13 +65,15 @@ export async function loadKeyVaultSecrets() {
   if (!env.keyVault.enabled || !env.keyVault.vaultName) return;
   const vault = env.keyVault.vaultName;
   // mapping of canonical env keys -> possible Key Vault secret name variants
+  // Note: Azure Key Vault secret names cannot contain underscores. Prefer condensed names; optionally include hyphenated forms.
   const candidates: Record<string, string[]> = {
-    SQL_PASSWORD: ['SQL_PASSWORD', 'SQL-PASSWORD', 'SQLPASSWORD'],
-    SQL_USER: ['SQL_USER', 'SQL-USER', 'SQLUSER'],
-  SQL_SERVER: ['SQL_SERVER', 'SQL-SERVER', 'SQLSERVER'],
-  SQL_DATABASE: ['SQL_DATABASE', 'SQL-DATABASE', 'SQLDATABASE'],
-    JWT_SECRET: ['JWT_SECRET', 'JWT-SECRET', 'JWTSECRET'],
-    OPENAI_API_KEY: ['OPENAI_API_KEY', 'OPENAIAPIKEY', 'OPENAI-API-KEY', 'OPENAI-KEY']
+    // Only load SQL user/password if using SQL auth; for AAD modes these are not needed
+    ...(env.sql.auth === 'sql' ? { SQL_PASSWORD: ['SQLPASSWORD'], SQL_USER: ['SQLUSER'] } : {}),
+    SQL_SERVER: ['SQLSERVER', 'SQL-SERVER'],
+    SQL_DATABASE: ['SQLDATABASE', 'SQL-DATABASE'],
+    JWT_SECRET: ['JWTSECRET', 'JWT-SECRET'],
+    // For OpenAI, avoid hyphens per org policy; use condensed names
+    OPENAI_API_KEY: ['OPENAIAPIKEY']
   };
 
   // try variants for each canonical name and hydrate process.env with the first one found
