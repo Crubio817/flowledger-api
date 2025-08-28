@@ -15,6 +15,7 @@ import clientDocuments from './routes/client_documents';
 import clientTags from './routes/client_tags';
 import clientTagMap from './routes/client_tag_map';
 import auditSipoc from './routes/audit_sipoc';
+import contactSocialProfiles from './routes/contact_social_profiles';
 import interviews from './routes/interviews';
 import interviewResponses from './routes/interview_responses';
 import findings from './routes/findings';
@@ -72,6 +73,7 @@ app.use('/api/client-onboarding-tasks', clientOnboarding);
 app.use('/api/client-documents', clientDocuments);
 app.use('/api/client-tags', clientTags);
 app.use('/api/client-tag-map', clientTagMap);
+app.use('/api/contact-social-profiles', contactSocialProfiles);
 
 app.use(errorHandler);
 

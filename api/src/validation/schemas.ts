@@ -126,3 +126,17 @@ export const ClientTagMapCreate = ClientTagMapSchema;
 export type ClientTag = z.infer<typeof ClientTagSchema>;
 export type ClientTagMap = z.infer<typeof ClientTagMapSchema>;
 
+// Social profiles
+export const ContactSocialProfileSchema = z.object({
+  id: z.number().int().nonnegative().optional(),
+  contact_id: z.number().int().nonnegative(),
+  provider: z.string().min(1).max(50),
+  profile_url: z.string().url().max(512),
+  is_primary: z.boolean().optional(),
+  created_utc: z.string().nullable().optional(),
+  updated_utc: z.string().nullable().optional()
+});
+export const ContactSocialProfileCreate = ContactSocialProfileSchema.pick({ contact_id: true, provider: true, profile_url: true, is_primary: true });
+export const ContactSocialProfileUpdate = ContactSocialProfileCreate.partial().refine(d=>Object.keys(d).length>0, 'At least one field required');
+export type ContactSocialProfile = z.infer<typeof ContactSocialProfileSchema>;
+

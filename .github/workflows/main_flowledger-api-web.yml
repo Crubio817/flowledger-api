@@ -55,11 +55,35 @@ jobs:
         with:
           name: node-app
 
-      - name: Deploy to Azure Web App (ZIP)
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App (ZIP) using publish-profile
+        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE != '' }}
+        id: deploy-to-webapp-publish
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'flowledger-api-web'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./deploy.zip
+
+      - name: Login to Azure (SPN)
+        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE == '' && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App (ZIP) using SPN
+        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE == '' && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        id: deploy-to-webapp-spn
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'flowledger-api-web'
+          slot-name: 'Production'
+          package: ./deploy.zip
+
+      - name: Fail if no Azure credentials available
+        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE == '' && (secrets.AZURE_CLIENT_ID == '' || secrets.AZURE_TENANT_ID == '' || secrets.AZURE_SUBSCRIPTION_ID == '') }}
+        run: |
+          echo 'No Azure credentials found. Set AZURE_WEBAPP_PUBLISH_PROFILE or AZURE_CLIENT_ID/AZURE_TENANT_ID/AZURE_SUBSCRIPTION_ID in repository secrets.'
+          exit 1
