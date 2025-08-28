@@ -55,35 +55,17 @@ jobs:
         with:
           name: node-app
 
-      - name: Deploy to Azure Web App (ZIP) using publish-profile
-        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE != '' }}
-        id: deploy-to-webapp-publish
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'flowledger-api-web'
-          slot-name: 'Production'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./deploy.zip
-
-      - name: Login to Azure (SPN)
-        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE == '' && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+      - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_23C8370738634DA49E74C260F72B2AEF }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7A2BFF6ACEB54D4E9F29C6173F318D85 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0D32C3D9A50D4DDE895C7C7982CB276E }}
 
-      - name: Deploy to Azure Web App (ZIP) using SPN
-        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE == '' && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
-        id: deploy-to-webapp-spn
+      - name: Deploy to Azure Web App (ZIP)
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'flowledger-api-web'
           slot-name: 'Production'
           package: ./deploy.zip
-
-      - name: Fail if no Azure credentials available
-        if: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE == '' && (secrets.AZURE_CLIENT_ID == '' || secrets.AZURE_TENANT_ID == '' || secrets.AZURE_SUBSCRIPTION_ID == '') }}
-        run: |
-          echo 'No Azure credentials found. Set AZURE_WEBAPP_PUBLISH_PROFILE or AZURE_CLIENT_ID/AZURE_TENANT_ID/AZURE_SUBSCRIPTION_ID in repository secrets.'
-          exit 1
