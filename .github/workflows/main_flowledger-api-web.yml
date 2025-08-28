@@ -39,15 +39,14 @@ jobs:
           # create a temporary deployment folder with compiled output and a minimal runtime package.json
           rm -rf ../deploy_tmp || true
           mkdir -p ../deploy_tmp
+          # prune devDependencies from node_modules for runtime
+          npm prune --omit=dev --no-audit --no-fund || true
+          # copy compiled output and pruned node_modules
           cp -R dist ../deploy_tmp/
-          # include package.json and lockfile so Azure can install dependencies
-          cp package.json ../deploy_tmp/
-          if [ -f package-lock.json ]; then cp package-lock.json ../deploy_tmp/; fi
-          # install production dependencies into the deploy folder so the app is self-contained
-          pushd ../deploy_tmp >/dev/null
-          npm ci --omit=dev --no-audit --no-fund
-          popd >/dev/null
-          # zip the prepared deploy_tmp folder contents (package.json at root + dist)
+          cp -R node_modules ../deploy_tmp/
+          # write minimal runtime package.json (no build script)
+          printf '{\n  "name": "flowledger-api",\n  "version": "0.1.0",\n  "main": "dist/server.js",\n  "engines": { "node": "20.x" },\n  "scripts": { "start": "node dist/server.js" }\n}\n' > ../deploy_tmp/package.json
+          # zip the prepared deploy_tmp folder contents (dist + node_modules + runtime package.json)
           cd ../deploy_tmp
           zip -r ../deploy.zip . >/dev/null
           cd ..

@@ -188,6 +188,22 @@ export function setupOpenApi(app: Express) {
     try {
       const raw = fs.readFileSync(snapshotPath, 'utf8');
       spec = JSON.parse(raw);
+      // If an additions file exists, merge its paths/components into the snapshot so
+      // small manual additions don't require editing the large generated snapshot.
+      const additionsPath = path.resolve(__dirname, '../../openapi.additions.json');
+      if (fs.existsSync(additionsPath)) {
+        try {
+          const addRaw = fs.readFileSync(additionsPath, 'utf8');
+          const adds = JSON.parse(addRaw);
+          spec.paths = Object.assign({}, spec.paths || {}, adds.paths || {});
+          if (adds.components && adds.components.schemas) {
+            spec.components = spec.components || {};
+            spec.components.schemas = Object.assign({}, spec.components.schemas || {}, adds.components.schemas || {});
+          }
+        } catch (e) {
+          console.warn('Failed to merge openapi.additions.json', e);
+        }
+      }
     } catch (err) {
       // if parsing fails, fall back to generated spec
       console.warn('Failed to read openapi.snapshot.json, falling back to swagger-jsdoc', err);
