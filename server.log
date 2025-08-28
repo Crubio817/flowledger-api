@@ -1,10 +1,23 @@
 nohup: ignoring input
-npm ERR! code ENOENT
-npm ERR! syscall open
-npm ERR! path /workspaces/flowledger-api/package.json
-npm ERR! errno -2
-npm ERR! enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/workspaces/flowledger-api/package.json'
-npm ERR! enoent This is related to npm not being able to find a file.
-npm ERR! enoent 
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
 
-npm ERR! A complete log of this run can be found in: /home/codespace/.npm/_logs/2025-08-14T22_50_51_469Z-debug-0.log
+Error: Cannot find module 'express'
+Require stack:
+- /workspaces/flowledger-api/api/dist/server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/workspaces/flowledger-api/api/dist/server.js:39:35)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/workspaces/flowledger-api/api/dist/server.js' ]
+}
+
+Node.js v22.17.0

@@ -26,7 +26,14 @@ import { setupOpenApi } from './docs/openapi';
 async function start() {
   // If KeyVault is configured, hydrate secrets first
   try { await (await import('./config/env')).loadKeyVaultSecrets(); } catch { /* ignore */ }
-  (await import('./config/env')).assertConfig();
+  // Be tolerant during startup: if required SQL env is missing, log but continue so /healthz and /api/docs work.
+  try {
+    (await import('./config/env')).assertConfig();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[startup] Configuration validation failed:', msg);
+    console.error('[startup] Server will still start, but DB-backed endpoints may fail until settings are fixed.');
+  }
   const app = express();
 app.use(helmet());
 app.use(cors());

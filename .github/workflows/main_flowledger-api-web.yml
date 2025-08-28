@@ -41,9 +41,10 @@ jobs:
           mkdir -p ../deploy_tmp
           # prune devDependencies from node_modules for runtime
           npm prune --omit=dev --no-audit --no-fund || true
-          # copy compiled output and pruned node_modules
+          # copy compiled output
           cp -R dist ../deploy_tmp/
-          cp -R node_modules ../deploy_tmp/
+          # create node_modules tarball to satisfy Oryx startup (expects node_modules.tar.gz)
+          tar -czf ../deploy_tmp/node_modules.tar.gz -C node_modules .
           # write minimal runtime package.json (no build script)
           printf '{\n  "name": "flowledger-api",\n  "version": "0.1.0",\n  "main": "dist/server.js",\n  "engines": { "node": "20.x" },\n  "scripts": { "start": "node dist/server.js" }\n}\n' > ../deploy_tmp/package.json
           # zip the prepared deploy_tmp folder contents (dist + node_modules + runtime package.json)
