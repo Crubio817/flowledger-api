@@ -55,11 +55,18 @@ jobs:
           cd ..
           rm -rf deploy_tmp
 
+      - name: Show workspace and built artifact
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          pwd
+          ls -la "$GITHUB_WORKSPACE" || true
+          if [ -f "$GITHUB_WORKSPACE/deploy.zip" ]; then echo "deploy.zip exists:"; ls -lh "$GITHUB_WORKSPACE/deploy.zip"; else echo "deploy.zip not found in workspace"; fi
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./deploy.zip
+          path: deploy.zip
 
   deploy:
     runs-on: ubuntu-latest
