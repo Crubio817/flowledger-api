@@ -1,22 +1,23 @@
 {
 	"paths": {
-		"/api/contact-social-profiles": {
+		"/api/client-tags": {
 			"get": {
-				"summary": "List contact social profiles",
-				"tags": ["ContactSocialProfiles"],
+				"summary": "List client tags",
+				"tags": ["ClientTags"],
 				"parameters": [
 					{ "in": "query", "name": "page", "schema": { "type": "integer", "minimum": 1 } },
 					{ "in": "query", "name": "limit", "schema": { "type": "integer", "minimum": 1 } }
 				],
 				"responses": {
 					"200": {
+						"description": "Tags list",
 						"content": {
 							"application/json": {
 								"schema": {
 									"type": "object",
 									"properties": {
 										"status": { "type": "string", "enum": ["ok"] },
-										"data": { "type": "array", "items": { "$ref": "#/components/schemas/ContactSocialProfile" } },
+										"data": { "type": "array", "items": { "$ref": "#/components/schemas/ClientTag" } },
 										"meta": { "$ref": "#/components/schemas/PageMeta" }
 									}
 								}
@@ -26,141 +27,91 @@
 				}
 			},
 			"post": {
-				"summary": "Create contact social profile",
-				"tags": ["ContactSocialProfiles"],
-				"requestBody": {
-					"required": true,
-					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactSocialProfileCreate" } } }
-				},
-				"responses": {
-					"201": {
-						"description": "Created",
-						"content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/ContactSocialProfile" } } } } }
-					}
-				}
+				"summary": "Create client tag",
+				"tags": ["ClientTags"],
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagCreate" } } } },
+				"responses": { "201": { "description": "Tag created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTag" } } } } }
 			}
 		},
-		"/api/ai/chat": {
-			"post": {
-				"summary": "Chat completion",
-				"tags": ["AI"],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": ["messages"],
-								"properties": {
-									"messages": { "type": "array", "items": { "type": "object" } },
-									"model": { "type": "string" },
-									"temperature": { "type": "number" }
-								}
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": { "description": "Assistant reply", "content": { "application/json": { "schema": { "type": "object" } } } }
-				}
+
+		"/api/client-tags/{id}": {
+			"get": {
+				"summary": "Get client tag by id",
+				"tags": ["ClientTags"],
+				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
+				"responses": { "200": { "description": "Tag", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTag" } } } } }
+			},
+			"put": {
+				"summary": "Update client tag",
+				"tags": ["ClientTags"],
+				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagUpdate" } } } },
+				"responses": { "200": { "description": "Tag updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTag" } } } } }
+			},
+			"delete": {
+				"summary": "Delete client tag",
+				"tags": ["ClientTags"],
+				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
+				"responses": { "200": { "description": "Deleted" } }
 			}
-		},
-		"/api/ai/chat-stream": {
-			"post": {
-				"summary": "Chat completion (SSE stream)",
-				"tags": ["AI"],
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object" } } } },
-				"responses": { "200": { "description": "SSE stream" } }
-			}
-		},
-		"/api/ai/assist": {
-			"post": {
-				"summary": "Tool-enabled assistant that can fetch server data",
-				"tags": ["AI"],
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object" } } } },
-				"responses": { "200": { "description": "Assistant reply with tool trace", "content": { "application/json": { "schema": { "type": "object" } } } } }
-			}
-		},
-		"/api/ai/tag-suggest": {
-			"post": {
-				"summary": "Suggest tags for a note (reuse existing, propose few new)",
-				"tags": ["AI"],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"required": ["client_id", "note"],
-								"properties": {
-									"client_id": { "type": "integer" },
-									"note": { "type": "string" },
-									"maxExisting": { "type": "integer" },
-									"maxNew": { "type": "integer" }
-								}
-							}
-						}
-					}
-				},
+		}
+
+		,
+		"/api/client-tag-map": {
+			"get": {
+				"summary": "List client->tag mappings",
+				"tags": ["ClientTagMap"],
+				"parameters": [
+					{ "in": "query", "name": "page", "schema": { "type": "integer", "minimum": 1 } },
+					{ "in": "query", "name": "limit", "schema": { "type": "integer", "minimum": 1 } }
+				],
 				"responses": {
 					"200": {
-						"description": "Tag suggestions",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"status": { "type": "string" },
-										"data": {
-											"type": "object",
-											"properties": {
-												"existing": { "type": "array", "items": { "type": "object" } },
-												"new": { "type": "array", "items": { "type": "object" } },
-												"rationale": { "type": "string" }
-											}
-										}
-									}
-								}
-							}
-						}
+						"description": "Mappings list",
+						"content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "enum": ["ok"] }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/ClientTagMap" } }, "meta": { "$ref": "#/components/schemas/PageMeta" } } } } }
 					}
 				}
+			},
+			"post": {
+				"summary": "Create client->tag mapping (idempotent)",
+				"tags": ["ClientTagMap"],
+				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagMap" } } } },
+				"responses": { "201": { "description": "Mapping created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagMap" } } } } }
+			},
+			"delete": {
+				"summary": "Delete client->tag mapping",
+				"tags": ["ClientTagMap"],
+				"parameters": [
+					{ "in": "query", "name": "client_id", "required": true, "schema": { "type": "integer" } },
+					{ "in": "query", "name": "tag_id", "required": true, "schema": { "type": "integer" } }
+				],
+				"responses": { "200": { "description": "Deleted" }, "404": { "description": "Not found" } }
 			}
 		}
 	},
+
 	"components": {
 		"schemas": {
-			"ContactSocialProfile": {
+			"ClientTag": {
 				"type": "object",
 				"properties": {
-					"id": { "type": "integer" },
-					"contact_id": { "type": "integer" },
-					"provider": { "type": "string" },
-					"profile_url": { "type": "string" },
-					"is_primary": { "type": "boolean" },
-					"created_utc": { "type": "string", "format": "date-time" },
-					"updated_utc": { "type": "string", "format": "date-time", "nullable": true }
+					"tag_id": { "type": "integer" },
+					"tag_name": { "type": "string" }
 				}
 			},
-			"ContactSocialProfileCreate": {
-				"type": "object",
-				"required": ["contact_id", "provider", "profile_url"],
-				"properties": {
-					"contact_id": { "type": "integer" },
-					"provider": { "type": "string" },
-					"profile_url": { "type": "string" },
-					"is_primary": { "type": "boolean" }
+			"ClientTagCreate": { "type": "object", "required": [ "tag_name" ], "properties": { "tag_name": { "type": "string" } } },
+			"ClientTagUpdate": { "type": "object", "properties": { "tag_name": { "type": "string" } } }
+				,
+				"ClientTagMap": {
+					"type": "object",
+					"properties": {
+						"client_id": { "type": "integer" },
+						"tag_id": { "type": "integer" }
+					},
+					"required": ["client_id", "tag_id"]
 				}
-			},
-			"ContactSocialProfileUpdate": {
-				"type": "object",
-				"properties": {
-					"contact_id": { "type": "integer" },
-					"provider": { "type": "string" },
-					"profile_url": { "type": "string" },
-					"is_primary": { "type": "boolean" }
-				}
-			}
 		}
 	}
 }
+
+
