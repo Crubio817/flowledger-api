@@ -350,7 +350,62 @@
         "responses": { "200": { "description": "Deleted progress record" } }
       }
     }
-  },
+  ,
+    "/api/path-templates/{path_id}/publish": {
+      "post": {
+        "summary": "Publish a path template (create new active version)",
+        "parameters": [{ "name": "path_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PathTemplatePublish" },
+              "examples": { "default": { "value": { "new_version": "v1.1" } } }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Published template", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PathTemplate" } } } } }
+      }
+    },
+    "/api/path-templates/{path_id}/clone": {
+      "post": {
+        "summary": "Clone a path template as a draft",
+        "parameters": [{ "name": "path_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "201": { "description": "Cloned template", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PathTemplate" } } } } }
+      }
+    },
+    "/api/path-steps/reorder": {
+      "put": {
+        "summary": "Reorder steps for a path",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PathStepsReorder" },
+              "examples": { "default": { "value": { "path_id": 1, "order": [12,15,14] } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated step list", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PathStep" } } } } } }
+      }
+    },
+    "/api/path-templates/{path_id}/usage": {
+      "get": {
+        "summary": "Get template usage (audit count and recent audits)",
+        "parameters": [{ "name": "path_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "Usage summary",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PathTemplateUsage" },
+                "examples": { "default": { "value": { "audit_count": 3, "audits": [ { "audit_id": 21, "title": "AP Rapid Audit", "state": "analysis", "percent_complete": 45, "created_utc": "2025-08-30T12:00:00Z", "updated_utc": "2025-08-31T09:00:00Z" } ] } } }
+              }
+            }
+          }
+        }
+      }
+    },
   "components": {
     "schemas": {
       "Audit": {
@@ -440,6 +495,26 @@
         "type": "object",
         "properties": {
           "status": { "type": "string", "enum": ["not_started", "in_progress", "done"] }
+        }
+      },
+      "PathTemplatePublish": {
+        "type": "object",
+        "properties": { "new_version": { "type": "string" } },
+        "required": ["new_version"]
+      },
+      "PathStepsReorder": {
+        "type": "object",
+        "properties": {
+          "path_id": { "type": "integer" },
+          "order": { "type": "array", "items": { "type": "integer" } }
+        },
+        "required": ["path_id", "order"]
+      },
+      "PathTemplateUsage": {
+        "type": "object",
+        "properties": {
+          "audit_count": { "type": "integer" },
+          "audits": { "type": "array", "items": { "type": "object", "properties": { "audit_id": { "type": "integer" }, "title": { "type": "string" }, "state": { "type": "string" }, "percent_complete": { "type": "integer" }, "created_utc": { "type": "string" }, "updated_utc": { "type": "string" } } } }
         }
       }
     }
