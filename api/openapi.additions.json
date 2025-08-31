@@ -1,117 +1,447 @@
 {
-	"paths": {
-		"/api/client-tags": {
-			"get": {
-				"summary": "List client tags",
-				"tags": ["ClientTags"],
-				"parameters": [
-					{ "in": "query", "name": "page", "schema": { "type": "integer", "minimum": 1 } },
-					{ "in": "query", "name": "limit", "schema": { "type": "integer", "minimum": 1 } }
-				],
-				"responses": {
-					"200": {
-						"description": "Tags list",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"status": { "type": "string", "enum": ["ok"] },
-										"data": { "type": "array", "items": { "$ref": "#/components/schemas/ClientTag" } },
-										"meta": { "$ref": "#/components/schemas/PageMeta" }
-									}
-								}
-							}
-						}
-					}
-				}
-			},
-			"post": {
-				"summary": "Create client tag",
-				"tags": ["ClientTags"],
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagCreate" } } } },
-				"responses": { "201": { "description": "Tag created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTag" } } } } }
-			}
-		},
-
-		"/api/client-tags/{id}": {
-			"get": {
-				"summary": "Get client tag by id",
-				"tags": ["ClientTags"],
-				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
-				"responses": { "200": { "description": "Tag", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTag" } } } } }
-			},
-			"put": {
-				"summary": "Update client tag",
-				"tags": ["ClientTags"],
-				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagUpdate" } } } },
-				"responses": { "200": { "description": "Tag updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTag" } } } } }
-			},
-			"delete": {
-				"summary": "Delete client tag",
-				"tags": ["ClientTags"],
-				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
-				"responses": { "200": { "description": "Deleted" } }
-			}
-		}
-
-		,
-		"/api/client-tag-map": {
-			"get": {
-				"summary": "List client->tag mappings",
-				"tags": ["ClientTagMap"],
-				"parameters": [
-					{ "in": "query", "name": "page", "schema": { "type": "integer", "minimum": 1 } },
-					{ "in": "query", "name": "limit", "schema": { "type": "integer", "minimum": 1 } }
-				],
-				"responses": {
-					"200": {
-						"description": "Mappings list",
-						"content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "enum": ["ok"] }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/ClientTagMap" } }, "meta": { "$ref": "#/components/schemas/PageMeta" } } } } }
-					}
-				}
-			},
-			"post": {
-				"summary": "Create client->tag mapping (idempotent)",
-				"tags": ["ClientTagMap"],
-				"requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagMap" } } } },
-				"responses": { "201": { "description": "Mapping created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientTagMap" } } } } }
-			},
-			"delete": {
-				"summary": "Delete client->tag mapping",
-				"tags": ["ClientTagMap"],
-				"parameters": [
-					{ "in": "query", "name": "client_id", "required": true, "schema": { "type": "integer" } },
-					{ "in": "query", "name": "tag_id", "required": true, "schema": { "type": "integer" } }
-				],
-				"responses": { "200": { "description": "Deleted" }, "404": { "description": "Not found" } }
-			}
-		}
-	},
-
-	"components": {
-		"schemas": {
-			"ClientTag": {
-				"type": "object",
-				"properties": {
-					"tag_id": { "type": "integer" },
-					"tag_name": { "type": "string" }
-				}
-			},
-			"ClientTagCreate": { "type": "object", "required": [ "tag_name" ], "properties": { "tag_name": { "type": "string" } } },
-			"ClientTagUpdate": { "type": "object", "properties": { "tag_name": { "type": "string" } } }
-				,
-				"ClientTagMap": {
-					"type": "object",
-					"properties": {
-						"client_id": { "type": "integer" },
-						"tag_id": { "type": "integer" }
-					},
-					"required": ["client_id", "tag_id"]
-				}
-		}
-	}
+  "paths": {
+    "/api/audits": {
+      "get": {
+        "summary": "List audits for an engagement",
+        "responses": {
+          "200": {
+            "description": "Array of audits",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Audit" } },
+                "examples": {
+                  "default": {
+                    "value": [
+                      { "audit_id": 1, "engagement_id": 10, "title": "Audit 1", "domain": "Finance", "audit_type": "Internal", "owner_contact_id": 5, "path_id": 2 }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new audit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuditCreate" },
+              "examples": {
+                "default": {
+                  "value": { "engagement_id": 10, "title": "Audit 1", "domain": "Finance", "audit_type": "Internal", "owner_contact_id": 5, "path_id": 2 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created audit",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Audit" },
+                "examples": {
+                  "default": {
+                    "value": { "audit_id": 1, "engagement_id": 10, "title": "Audit 1", "domain": "Finance", "audit_type": "Internal", "owner_contact_id": 5, "path_id": 2 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audits/{audit_id}": {
+      "get": {
+        "summary": "Get audit by id",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "Audit header and step progress",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Audit" },
+                "examples": {
+                  "default": {
+                    "value": { "audit_id": 1, "engagement_id": 10, "title": "Audit 1", "domain": "Finance", "audit_type": "Internal", "owner_contact_id": 5, "path_id": 2 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audits/{audit_id}/path": {
+      "put": {
+        "summary": "Set path for an audit",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "path_id": { "type": "integer" } } },
+              "examples": { "default": { "value": { "path_id": 2 } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated audit" } }
+      }
+    },
+    "/api/audits/{audit_id}/advance-step": {
+      "post": {
+        "summary": "Advance step",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "step_id": { "type": "integer" }, "advance": { "type": "boolean" } } },
+              "examples": { "default": { "value": { "step_id": 3, "advance": true } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated audit with new step" } }
+      }
+    },
+    "/api/audits/{audit_id}/recalc-percent": {
+      "post": {
+        "summary": "Recalculate percent",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Updated percent complete" } }
+      }
+    },
+    "/api/audits/{audit_id}/progress": {
+      "post": {
+        "summary": "Upsert progress",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuditStepProgressCreate" },
+              "examples": { "default": { "value": { "step_id": 3, "status": "in_progress", "output_json": "{}", "notes": "Started work" } } }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Progress row",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditStepProgress" },
+                "examples": { "default": { "value": { "progress_id": 1, "audit_id": 1, "step_id": 3, "status": "in_progress" } } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audits/{audit_id}/advance-to-step": {
+      "post": {
+        "summary": "Advance to step",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "step_id": { "type": "integer" } } },
+              "examples": { "default": { "value": { "step_id": 4 } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated audit at the specified step" } }
+      }
+    },
+    "/api/path-templates": {
+      "get": {
+        "summary": "List path templates",
+        "responses": {
+          "200": {
+            "description": "Array of path templates",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PathTemplate" } },
+                "examples": { "default": { "value": [ { "path_id": 2, "name": "Standard Path" } ] } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create path template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PathTemplateCreate" },
+              "examples": { "default": { "value": { "name": "Standard Path" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Created path template" } }
+      }
+    },
+    "/api/path-templates/{path_id}": {
+      "get": {
+        "summary": "Get path template",
+        "parameters": [{ "name": "path_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "Path template",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PathTemplate" },
+                "examples": { "default": { "value": { "path_id": 2, "name": "Standard Path" } } }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update path template",
+        "parameters": [{ "name": "path_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PathTemplateUpdate" },
+              "examples": { "default": { "value": { "name": "Updated Path" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated path template" } }
+      },
+      "delete": {
+        "summary": "Delete path template",
+        "parameters": [{ "name": "path_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Deleted path template" } }
+      }
+    },
+    "/api/path-steps": {
+      "get": {
+        "summary": "List path steps",
+        "responses": {
+          "200": {
+            "description": "Array of path steps",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PathStep" } },
+                "examples": { "default": { "value": [ { "step_id": 1, "path_id": 2 } ] } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create path step",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PathStepCreate" },
+              "examples": { "default": { "value": { "path_id": 2 } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Created path step" } }
+      }
+    },
+    "/api/path-steps/{step_id}": {
+      "get": {
+        "summary": "Get path step",
+        "parameters": [{ "name": "step_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "Path step",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PathStep" },
+                "examples": { "default": { "value": { "step_id": 1, "path_id": 2 } } }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update path step",
+        "parameters": [{ "name": "step_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PathStepUpdate" },
+              "examples": { "default": { "value": { "path_id": 2 } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated path step" } }
+      },
+      "delete": {
+        "summary": "Delete path step",
+        "parameters": [{ "name": "step_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Deleted path step" } }
+      }
+    },
+    "/api/audit-step-progress": {
+      "get": {
+        "summary": "List audit step progress",
+        "responses": {
+          "200": {
+            "description": "Array of audit step progress",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AuditStepProgress" } },
+                "examples": { "default": { "value": [ { "progress_id": 1, "audit_id": 1, "step_id": 3, "status": "in_progress" } ] } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create progress record",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuditStepProgressCreate" },
+              "examples": { "default": { "value": { "audit_id": 1, "step_id": 3, "status": "in_progress" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Created progress record" } }
+      }
+    },
+    "/api/audit-step-progress/{progress_id}": {
+      "get": {
+        "summary": "Get progress",
+        "parameters": [{ "name": "progress_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "Progress record",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditStepProgress" },
+                "examples": { "default": { "value": { "progress_id": 1, "audit_id": 1, "step_id": 3, "status": "in_progress" } } }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update progress",
+        "parameters": [{ "name": "progress_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuditStepProgressUpdate" },
+              "examples": { "default": { "value": { "status": "done" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated progress record" } }
+      },
+      "delete": {
+        "summary": "Delete progress",
+        "parameters": [{ "name": "progress_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Deleted progress record" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Audit": {
+        "type": "object",
+        "properties": {
+          "audit_id": { "type": "integer" },
+          "engagement_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "domain": { "type": "string" },
+          "audit_type": { "type": "string" },
+          "owner_contact_id": { "type": "integer" },
+          "path_id": { "type": "integer" }
+        }
+      },
+      "AuditCreate": {
+        "type": "object",
+        "properties": {
+          "engagement_id": { "type": "integer" },
+          "title": { "type": "string" },
+          "domain": { "type": "string" },
+          "audit_type": { "type": "string" },
+          "owner_contact_id": { "type": "integer" },
+          "path_id": { "type": "integer" }
+        },
+        "required": ["engagement_id", "title", "domain", "audit_type", "owner_contact_id", "path_id"]
+      },
+      "PathTemplate": {
+        "type": "object",
+        "properties": {
+          "path_id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      },
+      "PathTemplateCreate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+      "PathTemplateUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" }
+        }
+      },
+      "PathStep": {
+        "type": "object",
+        "properties": {
+          "step_id": { "type": "integer" },
+          "path_id": { "type": "integer" }
+        }
+      },
+      "PathStepCreate": {
+        "type": "object",
+        "properties": {
+          "path_id": { "type": "integer" }
+        },
+        "required": ["path_id"]
+      },
+      "PathStepUpdate": {
+        "type": "object",
+        "properties": {
+          "path_id": { "type": "integer" }
+        }
+      },
+      "AuditStepProgress": {
+        "type": "object",
+        "properties": {
+          "progress_id": { "type": "integer" },
+          "audit_id": { "type": "integer" },
+          "step_id": { "type": "integer" },
+          "status": { "type": "string" }
+        }
+      },
+      "AuditStepProgressCreate": {
+        "type": "object",
+        "properties": {
+          "step_id": { "type": "integer" },
+          "status": { "type": "string", "enum": ["not_started", "in_progress", "done"] },
+          "output_json": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": ["step_id", "status"]
+      },
+      "AuditStepProgressUpdate": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["not_started", "in_progress", "done"] }
+        }
+      }
+    }
+  }
 }
-
-
