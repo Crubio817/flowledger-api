@@ -215,26 +215,32 @@ export function setupOpenApi(app: Express) {
   }
 
   // Merge additions from plausible locations (prefer same directory resolution strategy)
+  // By default merging is disabled to avoid runtime parse errors from stray files.
+  // Set OPENAPI_MERGE_ADDITIONS=true in the environment to enable merging.
   const additionsCandidates = [
     path.resolve(__dirname, '../../openapi.additions.json'),
     path.resolve(process.cwd(), 'openapi.additions.json'),
     path.resolve(process.cwd(), 'api', 'openapi.additions.json')
   ];
-
-  for (const aPath of additionsCandidates) {
-    if (fs.existsSync(aPath)) {
-      try {
-        const addRaw = fs.readFileSync(aPath, 'utf8');
-        const adds = JSON.parse(addRaw);
-        spec.paths = Object.assign({}, spec.paths || {}, adds.paths || {});
-        if (adds.components && adds.components.schemas) {
-          spec.components = spec.components || {};
-          spec.components.schemas = Object.assign({}, spec.components.schemas || {}, adds.components.schemas || {});
+  const mergeAdds = process.env.OPENAPI_MERGE_ADDITIONS === 'true';
+  if (!mergeAdds) {
+    console.info('Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable');
+  } else {
+    for (const aPath of additionsCandidates) {
+      if (fs.existsSync(aPath)) {
+        try {
+          const addRaw = fs.readFileSync(aPath, 'utf8');
+          const adds = JSON.parse(addRaw);
+          spec.paths = Object.assign({}, spec.paths || {}, adds.paths || {});
+          if (adds.components && adds.components.schemas) {
+            spec.components = spec.components || {};
+            spec.components.schemas = Object.assign({}, spec.components.schemas || {}, adds.components.schemas || {});
+          }
+          console.info('Merged OpenAPI additions from', aPath);
+          break; // merge first found additions file
+        } catch (e) {
+          console.warn('Failed to merge openapi.additions.json at', aPath, e);
         }
-        console.info('Merged OpenAPI additions from', aPath);
-        break; // merge first found additions file
-      } catch (e) {
-        console.warn('Failed to merge openapi.additions.json at', aPath, e);
       }
     }
   }
