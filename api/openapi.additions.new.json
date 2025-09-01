@@ -1,0 +1,81 @@
+{
+  "paths": {
+    "/api/audits": {
+      "get": {
+        "summary": "List audits for an engagement",
+        "parameters": [
+          { "name": "engagement_id", "in": "query", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Array of audits" } }
+      },
+      "post": {
+        "summary": "Create a new audit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "engagement_id": { "type": "integer" },
+                  "title": { "type": "string" },
+                  "domain": { "type": "string" },
+                  "audit_type": { "type": "string" },
+                  "owner_contact_id": { "type": "integer" },
+                  "path_id": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Created audit" } }
+      }
+    },
+    "/api/audits/{audit_id}": {
+      "get": {
+        "summary": "Get audit by id",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Audit header and step progress" } }
+      }
+    },
+    "/api/audits/{audit_id}/path": {
+      "put": {
+        "summary": "Set or change path for an audit (initialize first step)",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "path_id": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": "Updated audit" } }
+      }
+    },
+    "/api/audits/{audit_id}/advance-step": {
+      "post": {
+        "summary": "Mark step done and advance to the next",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "step_id": { "type": "integer" }, "advance": { "type": "boolean" } } } } } },
+        "responses": { "200": { "description": "Updated audit with new step" } }
+      }
+    },
+    "/api/audits/{audit_id}/recalc-percent": {
+      "post": {
+        "summary": "Recalculate percent complete",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Updated percent complete" } }
+      }
+    },
+    "/api/audits/{audit_id}/progress": {
+      "post": {
+        "summary": "Upsert step progress",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "step_id": { "type": "integer" }, "status": { "type": "string", "enum": ["not_started","in_progress","done"] }, "output_json": { "type": "string" }, "notes": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Progress row" } }
+      }
+    },
+    "/api/audits/{audit_id}/advance-to-step": {
+      "post": {
+        "summary": "Advance directly to a specific step",
+        "parameters": [{ "name": "audit_id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "step_id": { "type": "integer" } } } } } },
+        "responses": { "200": { "description": "Updated audit at the specified step" } }
+      }
+    }
+  }
+}

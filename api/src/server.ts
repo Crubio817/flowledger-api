@@ -20,11 +20,14 @@ import interviews from './routes/interviews';
 import interviewResponses from './routes/interview_responses';
 import findings from './routes/findings';
 import processMaps from './routes/process_maps';
+import pathTemplates from './routes/path_templates';
+import pathSteps from './routes/path_steps';
+import auditStepProgress from './routes/audit_step_progress';
 import auto from './routes/auto';
 import ai from './routes/ai';
 import { setupOpenApi } from './docs/openapi';
 
-async function start() {
+export async function createApp() {
   // If KeyVault is configured, hydrate secrets first
   try { await (await import('./config/env')).loadKeyVaultSecrets(); } catch { /* ignore */ }
   // Be tolerant during startup: if required SQL env is missing, log but continue so /healthz and /api/docs work.
@@ -79,20 +82,30 @@ app.use('/api/client-integrations', clientIntegrations);
 app.use('/api/client-locations', clientLocations);
 app.use('/api/client-contacts', clientContacts);
 app.use('/api/client-onboarding-tasks', clientOnboarding);
+// Historic/short path: keep `/api/onboarding-tasks` working for callers that expect the
+// shorter path (OpenAPI snapshot and some clients use this). Alias to the same router.
+app.use('/api/onboarding-tasks', clientOnboarding);
 app.use('/api/client-documents', clientDocuments);
 app.use('/api/client-tags', clientTags);
 app.use('/api/client-tag-map', clientTagMap);
 app.use('/api/contact-social-profiles', contactSocialProfiles);
+app.use('/api/path-templates', pathTemplates);
+app.use('/api/path-steps', pathSteps);
+app.use('/api/audit-step-progress', auditStepProgress);
 
 app.use(errorHandler);
 
 // OpenAPI (must be after routes so annotations are picked up by scanner)
 setupOpenApi(app);
-
-  const { env } = await import('./config/env');
-  app.listen(env.port, () => {
-    console.log(`API listening on http://localhost:${env.port} (sql.auth=${env.sql.auth})`);
-  });
+  return app;
 }
 
-start().catch(err => { console.error('Failed to start server', err); process.exit(1); });
+// If run directly, start listener (preserve original CLI behavior)
+if (require.main === module) {
+  createApp().then(async (app) => {
+    const { env } = await import('./config/env');
+    app.listen(env.port, () => {
+      console.log(`API listening on http://localhost:${env.port} (sql.auth=${env.sql.auth})`);
+    });
+  }).catch(err => { console.error('Failed to start server', err); process.exit(1); });
+}

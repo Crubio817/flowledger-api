@@ -32,17 +32,16 @@ export async function suggestTagsForNote(params: TagSuggestionInput): Promise<Ta
 
   const pool = await getPool();
   // Existing tags for this client
-  const existing = await pool
-    .request()
-    .input('cid', sql.Int, client_id)
-    .query(
-      `SELECT t.tag_id, t.tag_name
-       FROM app.client_tag_map m
-       JOIN app.client_tags t ON t.tag_id = m.tag_id
-       WHERE m.client_id = @cid
-       ORDER BY t.tag_name`
-    );
-  const clientTags = existing.recordset as { tag_id: number; tag_name: string }[];
+  // Try to find tags mapped directly to an engagement if client_id actually referred to an engagement id
+  // (backwards compatibility): check app.client_tag_map for engagement_id first, then fallback to client_id mapping.
+  const existingQuery = await pool.request().input('id', sql.Int, client_id).query(
+    `SELECT t.tag_id, t.tag_name, m.engagement_id, m.client_id
+     FROM app.client_tag_map m
+     JOIN app.client_tags t ON t.tag_id = m.tag_id
+     WHERE m.engagement_id = @id OR m.client_id = @id
+     ORDER BY t.tag_name`
+  );
+  const tagRows = existingQuery.recordset as { tag_id: number; tag_name: string }[];
 
   // Catalog of all tags (names only) to prefer from
   const all = await pool.request().query(`SELECT tag_id, tag_name FROM app.client_tags ORDER BY tag_name`);
@@ -50,7 +49,7 @@ export async function suggestTagsForNote(params: TagSuggestionInput): Promise<Ta
 
   // Build a short prompt with available tags to prefer
   const tagCatalog = allTags.map(t => t.tag_name).join(', ');
-  const clientTagSet = new Set(clientTags.map(t => t.tag_name.toLowerCase()));
+  const clientTagSet = new Set(tagRows.map(t => t.tag_name.toLowerCase()));
 
   const system = `You help categorize client notes with concise tags.
 Prefer reusing existing tags from the provided catalog.

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { asyncHandler, badRequest, ok } from '../utils/http';
 import { ai, chatOnce, runAgent } from '../services/ai';
 import { suggestTagsForNote } from '../services/tag_suggest';
+import { suggestNamesForEngagement } from '../services/name_suggest';
 
 const router = Router();
 
@@ -199,4 +200,11 @@ router.post('/tag-suggest', asyncHandler(async (req, res) => {
   if (typeof note !== 'string' || !note.trim()) return badRequest(res, 'note required');
   const result = await suggestTagsForNote({ client_id, note, maxExisting, maxNew });
   ok(res, result);
+}));
+
+router.post('/name-suggest', asyncHandler(async (req, res) => {
+  const { client_id, current_name, context, maxSuggestions } = req.body || {};
+  if (!current_name || typeof current_name !== 'string') return badRequest(res, 'current_name required');
+  const suggestions = await suggestNamesForEngagement({ client_id, current_name, context, maxSuggestions });
+  ok(res, { status: 'ok', data: suggestions });
 }));

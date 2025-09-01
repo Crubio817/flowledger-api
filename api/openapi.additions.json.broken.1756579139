@@ -1,0 +1,93 @@
+{
+	"paths": {
+		"/api/client-tags": {
+			"get": {
+				"summary": "List client tags",
+				"tags": ["ClientTags"],
+				"parameters": [
+					{ "in": "query", "name": "page", "schema": { "type": "integer", "minimum": 1 } },
+					{ "in": "query", "name": "limit", "schema": { "type": "integer", "minimum": 1 } }
+				],
+				"responses": {
+					"200": {
+						"description": "Tags list",
+						"content": {
+							"application/json": {
+								{
+									"paths": {
+										"/api/path-templates": {
+											"get": { "summary": "List path templates", "tags": ["PathTemplates"] },
+											"post": { "summary": "Create path template", "tags": ["PathTemplates"] }
+										},
+										"/api/path-templates/{path_id}": {
+											"get": { "summary": "Get path template by id", "tags": ["PathTemplates"] },
+											"put": { "summary": "Update path template", "tags": ["PathTemplates"] },
+											"delete": { "summary": "Delete path template", "tags": ["PathTemplates"] }
+										},
+										"/api/path-steps": {
+											"get": { "summary": "List path steps", "tags": ["PathSteps"] },
+											"post": { "summary": "Create path step", "tags": ["PathSteps"] }
+										},
+										"/api/path-steps/{step_id}": {
+											"get": { "summary": "Get path step by id", "tags": ["PathSteps"] },
+											"put": { "summary": "Update path step", "tags": ["PathSteps"] },
+											"delete": { "summary": "Delete path step", "tags": ["PathSteps"] }
+										},
+										"/api/audit-step-progress": {
+											"get": { "summary": "List audit step progress", "tags": ["AuditStepProgress"] },
+											"post": { "summary": "Create progress record", "tags": ["AuditStepProgress"] }
+										},
+										"/api/audit-step-progress/{progress_id}": {
+											"get": { "summary": "Get progress by id", "tags": ["AuditStepProgress"] },
+											"put": { "summary": "Update progress", "tags": ["AuditStepProgress"] },
+											"delete": { "summary": "Delete progress", "tags": ["AuditStepProgress"] }
+										}
+									},
+									"components": {
+										"schemas": {
+											"PathTemplate": {
+												"type": "object",
+												"properties": {
+													"path_id": { "type": "integer" },
+													"name": { "type": "string" },
+													"description": { "type": "string", "nullable": true },
+													"version": { "type": "string" },
+													"active": { "type": "boolean" }
+												}
+											},
+											"PathTemplateCreate": { "type": "object" },
+											"PathTemplateUpdate": { "type": "object" },
+											"PathStep": {
+												"type": "object",
+												"properties": {
+													"step_id": { "type": "integer" },
+													"path_id": { "type": "integer" },
+													"seq": { "type": "integer" },
+													"title": { "type": "string" },
+													"state_gate": { "type": "string" },
+													"required": { "type": "boolean" }
+												}
+											},
+											"PathStepCreate": { "type": "object" },
+											"PathStepUpdate": { "type": "object" },
+											"AuditStepProgress": {
+												"type": "object",
+												"properties": {
+													"progress_id": { "type": "integer" },
+													"audit_id": { "type": "integer" },
+													"step_id": { "type": "integer" },
+													"status": { "type": "string" },
+													"started_utc": { "type": "string", "format": "date-time", "nullable": true },
+													"completed_utc": { "type": "string", "format": "date-time", "nullable": true }
+												}
+											},
+											"AuditStepProgressCreate": { "type": "object" },
+											"AuditStepProgressUpdate": { "type": "object" }
+										}
+									}
+								}
+				"summary": "Update client tag",
+
+				"tags": ["ClientTags"],
+
+				"parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],

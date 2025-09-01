@@ -14,10 +14,34 @@ export const AuditSchema = z.object({
   client_id: z.number().int().nonnegative(),
   title: z.string().min(1).max(200),
   scope: z.string().max(1000).nullable().optional(),
-  status: z.string().max(40).nullable().optional()
+  status: z.string().max(40).nullable().optional(),
+  // New/expanded fields added by migrations
+  state: z.string().max(30).nullable().optional(),
+  domain: z.string().max(50).nullable().optional(),
+  audit_type: z.string().max(80).nullable().optional(),
+  path_id: z.number().int().nullable().optional(),
+  current_step_id: z.number().int().nullable().optional(),
+  start_utc: z.coerce.date().nullable().optional(),
+  end_utc: z.coerce.date().nullable().optional(),
+  owner_contact_id: z.number().int().nullable().optional(),
+  notes: z.string().nullable().optional()
 });
-export const AuditCreateBody = AuditSchema.pick({ audit_id: true, client_id: true, title: true, scope: true, status: true });
-export const AuditUpdateBody = AuditSchema.pick({ title: true, scope: true, status: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+// AuditCreateBody moved below after optionalNullableDate helper
+
+export const AuditUpdateBody = AuditSchema.pick({
+  title: true,
+  scope: true,
+  status: true,
+  state: true,
+  domain: true,
+  audit_type: true,
+  path_id: true,
+  current_step_id: true,
+  start_utc: true,
+  end_utc: true,
+  owner_contact_id: true,
+  notes: true
+}).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const CreateProcBody = z.object({
   Name: z.string().min(1).max(200),
@@ -37,16 +61,63 @@ export type Client = z.infer<typeof ClientSchema>;
 export type Audit = z.infer<typeof AuditSchema>;
 
 // Client-related helper schemas
+// Accept empty string, null, date string or Date for start/end dates.
+const optionalNullableDate = z.preprocess((val) => {
+  // treat empty string and undefined as null
+  if (val === '' || val === undefined) return null;
+  return val;
+}, z.coerce.date().nullable());
+
+export const AuditCreateBody = z.object({
+  // creation supports either an engagement_id (preferred) or a client_id for legacy flows
+  audit_id: z.number().int().nonnegative().optional(),
+  engagement_id: z.number().int().nonnegative().optional(),
+  client_id: z.number().int().nonnegative().optional(),
+  title: z.string().min(1).max(200),
+  scope: z.string().max(1000).nullable().optional(),
+  status: z.string().max(40).nullable().optional(),
+  state: z.string().max(30).nullable().optional(),
+  domain: z.string().max(50).nullable().optional(),
+  audit_type: z.string().max(80).nullable().optional(),
+  path_id: z.number().int().nullable().optional(),
+  current_step_id: z.number().int().nullable().optional(),
+  start_utc: optionalNullableDate.optional(),
+  end_utc: optionalNullableDate.optional(),
+  owner_contact_id: z.number().int().nullable().optional(),
+  notes: z.string().nullable().optional()
+}).refine(d => !!(d.engagement_id || d.client_id), 'engagement_id or client_id required');
+
+// Engagements: support both legacy `title` and current `name`, and both `start_date`/`start_utc` naming.
 export const ClientEngagementSchema = z.object({
   engagement_id: z.number().int().nonnegative().optional(),
   client_id: z.number().int().nonnegative(),
-  title: z.string().min(1).max(200),
-  start_date: z.coerce.date().nullable().optional(),
-  end_date: z.coerce.date().nullable().optional(),
-  status: z.string().max(40).optional()
+  // accept either name or title (one required on create)
+  name: z.string().min(1).max(200).optional(),
+  title: z.string().min(1).max(200).optional(),
+  // start/end can be provided as start_date/start_utc and accept empty strings
+  start_date: optionalNullableDate.optional(),
+  start_utc: optionalNullableDate.optional(),
+  end_date: optionalNullableDate.optional(),
+  end_utc: optionalNullableDate.optional(),
+  status: z.string().max(40).optional(),
+  notes: z.string().max(2000).optional()
 });
-export const ClientEngagementCreate = ClientEngagementSchema.pick({ client_id: true, title: true, start_date: true, end_date: true, status: true });
-export const ClientEngagementUpdate = ClientEngagementCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+const ClientEngagementCreateBase = z.object({
+  client_id: z.number().int().nonnegative(),
+  name: z.string().min(1).max(200).optional(),
+  title: z.string().min(1).max(200).optional(),
+  start_date: optionalNullableDate.optional(),
+  start_utc: optionalNullableDate.optional(),
+  end_date: optionalNullableDate.optional(),
+  end_utc: optionalNullableDate.optional(),
+  status: z.string().max(40).optional(),
+  notes: z.string().max(2000).optional()
+});
+
+export const ClientEngagementCreate = ClientEngagementCreateBase.refine(d => !!(d.name || d.title), 'name or title required');
+
+export const ClientEngagementUpdate = ClientEngagementCreateBase.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const ClientIntegrationSchema = z.object({
   integration_id: z.number().int().nonnegative().optional(),
@@ -87,11 +158,12 @@ export const ClientContactUpdate = ClientContactCreate.partial().refine(d => Obj
 export const OnboardingTaskSchema = z.object({
   task_id: z.number().int().nonnegative().optional(),
   client_id: z.number().int().nonnegative(),
-  title: z.string().min(1).max(200),
+  name: z.string().min(1).max(200),
+  description: z.string().max(1000).optional().nullable(),
   status: z.string().max(40).optional(),
-  due_date: z.coerce.date().nullable().optional()
+  due_utc: z.coerce.date().nullable().optional()
 });
-export const OnboardingTaskCreate = OnboardingTaskSchema.pick({ client_id: true, title: true, status: true, due_date: true });
+export const OnboardingTaskCreate = OnboardingTaskSchema.pick({ client_id: true, name: true, description: true, status: true, due_utc: true });
 export const OnboardingTaskUpdate = OnboardingTaskCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const ClientDocumentSchema = z.object({
@@ -119,7 +191,7 @@ export const ClientTagCreate = ClientTagSchema.pick({ tag_name: true });
 export const ClientTagUpdate = ClientTagCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const ClientTagMapSchema = z.object({
-  client_id: z.number().int().nonnegative(),
+  engagement_id: z.number().int().nonnegative(),
   tag_id: z.number().int().nonnegative()
 });
 export const ClientTagMapCreate = ClientTagMapSchema;
