@@ -59,10 +59,10 @@ router.put('/:path_id', asyncHandler(async (req, res) => {
   if (data.version !== undefined) { sets.push('version = @version'); request.input('version', sql.NVarChar(20), data.version); }
   if (data.active !== undefined) { sets.push('active = @active'); request.input('active', sql.Bit, data.active ? 1 : 0); }
   if (!sets.length) return badRequest(res, 'No fields to update');
-  sets.push('created_utc = created_utc');
   const result = await request.query(`UPDATE app.path_templates SET ${sets.join(', ')} WHERE path_id = @id`);
   if (result.rowsAffected[0] === 0) return notFound(res);
   const read = await pool.request().input('id', sql.Int, id).query(`SELECT path_id, name, description, version, active, created_utc FROM app.path_templates WHERE path_id=@id`);
+  await logActivity({ type: 'AuditUpdated', title: `Path ${id} updated`, client_id: null });
   ok(res, read.recordset[0]);
 }));
 

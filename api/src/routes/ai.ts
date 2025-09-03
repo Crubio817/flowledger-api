@@ -208,3 +208,39 @@ router.post('/name-suggest', asyncHandler(async (req, res) => {
   const suggestions = await suggestNamesForEngagement({ client_id, current_name, context, maxSuggestions });
   ok(res, { status: 'ok', data: suggestions });
 }));
+
+/**
+ * @openapi
+ * /api/ai/name-suggest:
+ *   post:
+ *     summary: Suggest names for an engagement
+ *     tags: [AI]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [current_name]
+ *             properties:
+ *               client_id: { type: integer }
+ *               current_name: { type: string }
+ *               context: { type: string }
+ *               maxSuggestions: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Name suggestions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name: { type: string }
+ *                       reason: { type: string }
+ */

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, notFound, listOk } from '../utils/http';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 
@@ -187,6 +188,7 @@ router.put(
       customers_json: safeParseJson(row.customers_json),
       metrics_json: safeParseJson(row.metrics_json),
     };
+    await logActivity({ type: 'AuditSipocUpdated', title: `Updated SIPOC for audit ${auditId}`, audit_id: auditId });
     ok(res, parsed);
   })
 );

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { InterviewCreateBody, InterviewUpdateBody } from '../validation/schemas';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ async function auditExists(auditId: number) {
   return r.recordset.length > 0;
 }
 
-/**
+/*
  * @openapi
  * /api/interviews:
  *   get:
@@ -99,6 +100,7 @@ router.post('/', asyncHandler(async (req, res) => {
     .query(`INSERT INTO app.interviews (interview_id, audit_id, persona, mode, scheduled_utc, status, notes)
             OUTPUT INSERTED.interview_id, INSERTED.audit_id, INSERTED.persona, INSERTED.mode, INSERTED.scheduled_utc, INSERTED.status, INSERTED.notes, INSERTED.created_utc, INSERTED.updated_utc
             VALUES (@interview_id, @audit_id, @persona, @mode, @scheduled_utc, COALESCE(@status, N'Planned'), @notes)`);
+  await logActivity({ type: 'AuditUpdated', title: `Interview ${result.recordset[0].interview_id} created`, audit_id });
   ok(res, result.recordset[0], 201);
 }));
 
@@ -121,6 +123,7 @@ router.put('/:interview_id', asyncHandler(async (req, res) => {
   const result = await request.query(`UPDATE app.interviews SET ${sets.join(', ')} WHERE interview_id = @id`);
   if (result.rowsAffected[0] === 0) return notFound(res);
   const r = await pool.request().input('id', sql.Int, interviewId).query(`SELECT interview_id, audit_id, persona, mode, scheduled_utc, status, notes, created_utc, updated_utc FROM app.interviews WHERE interview_id = @id`);
+  await logActivity({ type: 'AuditUpdated', title: `Interview ${interviewId} updated`, audit_id: r.recordset[0].audit_id });
   ok(res, r.recordset[0]);
 }));
 
@@ -130,11 +133,16 @@ router.delete(
     const interviewId = Number(req.params.interview_id);
     if (!Number.isInteger(interviewId) || interviewId <= 0) return badRequest(res, 'interview_id must be a positive integer');
     const pool = await getPool();
+    // Get audit_id before deleting
+    const read = await pool.request().input('id', sql.Int, interviewId).query(`SELECT audit_id FROM app.interviews WHERE interview_id = @id`);
+    if (!read.recordset[0]) return notFound(res);
+    const audit_id = read.recordset[0].audit_id;
     try {
       const result = await pool.request().input('id', sql.Int, interviewId).query(
         `DELETE FROM app.interviews WHERE interview_id = @id`
       );
   if (result.rowsAffected[0] === 0) return notFound(res);
+      await logActivity({ type: 'AuditDeleted', title: `Interview ${interviewId} deleted`, audit_id });
       ok(res, { deleted: result.rowsAffected[0] });
     } catch (e: any) {
       res.status(409).json({ error: { code: 'Conflict', message: e?.message || 'Conflict' } });

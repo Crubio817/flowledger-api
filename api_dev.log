@@ -3,7 +3,8 @@ nohup: ignoring input
 > flowledger-api@0.1.0 dev
 > ts-node-dev --respawn --transpile-only src/server.ts
 
-[INFO] 19:57:31 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.2)
+[INFO] 20:02:22 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.2)
 Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
 Serving openapi snapshot from /workspaces/flowledger-api/api/openapi.snapshot.json
 API listening on http://localhost:4001 (sql.auth=sql)
+[db] Connecting using auth=sql user=radar_admin

@@ -1,0 +1,312 @@
+nohup: ignoring input
+
+> flowledger-api@0.1.0 dev
+> ts-node-dev --respawn --transpile-only src/server.ts
+
+[INFO] 01:09:14 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.2)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:105:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:105:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map key[INFO] 01:11:56 Restarting: /workspaces/flowledger-api/api/src/validation/schemas.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:105:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:105:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/workspaces/flowledger-api/api/node_modules/express/lib/application.js:635:24)
+    at /workspaces/flowledger-api/api/src/server.ts:117:9
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:12:00 Err[INFO] 01:12:31 Restarting: /workspaces/flowledger-api[INFO] 01:12:31 Restarting: /workspaces/flowlFailed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:105:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:105:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node[INFO] 01:12:37 Restarting: /workspaces/flowledger-api/api/src/server.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:106:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+FaFailed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:106:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^[INFO] 01:12:43 Restarting: /workspaces/flowledger-api/api/src/server.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:585:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/workspaces/flowledger-api/api/node_modules/express/lib/application.js:635:24)
+    at /workspaces/flowledger-api/api/src/server.ts:119:9
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:12:47 Error: listen EADDRINUSE: address already in use :::4001
+[INFO] 01:12:52 Restarting: /workspaces/flowledger-api/api/src/docs/openapi.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:633:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:633:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/workspaces/flowledger-api/api/node_modules/express/lib/application.js:635:24)
+    at /workspaces/flowledger-api/api/src/server.ts:119:9
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:12:55 Error: listen EADDRINUSE: address already in use :::4001
+[INFO] 01:13:02 Restarting: /workspaces/flowledger-api/api/src/docs/openapi.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:851:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:851:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/workspaces/flowledger-apNot all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact[ERROR] 01:13:06 Error: listen EADDRINUSE: address already in use :::4001
+[INFO] 01:14:10 Restarting: /workspaces/flowledger-api/api/src/utils/activity.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:851:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:8Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    atNot all input has been taken into account at your final spFailed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:851:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpeNot all inpu[INFO] 01:14:18 Restarting: /workspaces/flowledger-api/api/src/utils/activity.ts has been modified
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:851:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Failed to parse candidate openapi.snapshot.json at /workspaces/flowledger-api/api/openapi.snapshot.json SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at setupOpenApi (/workspaces/flowledger-api/api/src/docs/openapi.ts:851:21)
+    at createApp (/workspaces/flowledger-api/api/src/server.ts:107:7)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+Not all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/workspaces/flowledger-api/api/node_modules/express/lib/application.js:635:24)
+    at /workspaces/flowledger-api/api/src/server.ts:119:9
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:14:21 Error: listen EADDRINUSE: address already in use :::4001
+t has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, coNot all input has been taken into account at your final specification.
+Here's the report: 
+
+
+ Error in src/routes/audits.ts :
+YAMLSemanticError: Nested mappings are not allowed in compact mappings at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+YAMLSemanticError: Implicit map keys need to be on a single line at line 3, column 14:
+
+    summary: List audits
+             ^^^^^^^^^^^…
+
+No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
+Error: listen EADDRINUSE: address already in use :::4001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (/workspaces/flowledger-api/api/node_modules/express/lib/application.js:635:24)
+    at /workspaces/flowledger-api/api/src/server.ts:119:9
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:14:21 Error: listen EADDRINUSE: address already in use :::4001

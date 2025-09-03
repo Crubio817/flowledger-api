@@ -6,7 +6,7 @@ export const ClientSchema = z.object({
   is_active: z.boolean().optional()
 });
 
-export const ClientCreateBody = ClientSchema.pick({ client_id: true, name: true, is_active: true });
+export const ClientCreateBody = ClientSchema.pick({ name: true, is_active: true }).partial({ is_active: true });
 export const ClientUpdateBody = ClientSchema.pick({ name: true, is_active: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const AuditSchema = z.object({
@@ -46,8 +46,8 @@ export const AuditUpdateBody = AuditSchema.pick({
 export const CreateProcBody = z.object({
   Name: z.string().min(1).max(200),
   IsActive: z.boolean().optional(),
+  PackCode: z.string().max(64).nullable().optional(),
   PrimaryContactId: z.number().int().nullable().optional(),
-  PlaybookCode: z.string().max(50).optional(),
   OwnerUserId: z.number().int().nullable().optional()
 });
 
@@ -132,11 +132,17 @@ export const ClientIntegrationUpdate = ClientIntegrationCreate.partial().refine(
 export const ClientLocationSchema = z.object({
   location_id: z.number().int().nonnegative().optional(),
   client_id: z.number().int().nonnegative(),
-  name: z.string().min(1).max(200),
-  address: z.string().max(1000).optional(),
-  active: z.boolean().optional()
+  label: z.string().min(1).max(200),
+  line1: z.string().max(200).optional(),
+  line2: z.string().max(200).nullable().optional(),
+  city: z.string().max(100).nullable().optional(),
+  state_province: z.string().max(100).nullable().optional(),
+  postal_code: z.string().max(20).nullable().optional(),
+  country: z.string().max(100).nullable().optional(),
+  is_primary: z.boolean().optional(),
+  created_utc: z.string().nullable().optional()
 });
-export const ClientLocationCreate = ClientLocationSchema.pick({ client_id: true, name: true, address: true, active: true });
+export const ClientLocationCreate = ClientLocationSchema.pick({ client_id: true, label: true, line1: true, line2: true, city: true, state_province: true, postal_code: true, country: true, is_primary: true });
 export const ClientLocationUpdate = ClientLocationCreate.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const ClientContactSchema = z.object({
@@ -245,3 +251,92 @@ export const ContactSocialProfileSchema = z.object({
 export const ContactSocialProfileCreate = ContactSocialProfileSchema.pick({ contact_id: true, provider: true, profile_url: true, is_primary: true });
 export const ContactSocialProfileUpdate = ContactSocialProfileCreate.partial().refine(d=>Object.keys(d).length>0, 'At least one field required');
 export type ContactSocialProfile = z.infer<typeof ContactSocialProfileSchema>;
+
+// Task Packs
+export const TaskPackSchema = z.object({
+  pack_id: z.number().int().nonnegative().optional(),
+  pack_code: z.string().min(1).max(50),
+  pack_name: z.string().min(1).max(200),
+  description: z.string().max(1000).nullable().optional(),
+  status_scope: z.enum(['active', 'prospect', 'any']).optional(),
+  is_active: z.boolean().optional(),
+  effective_from_utc: z.coerce.date().nullable().optional(),
+  effective_to_utc: z.coerce.date().nullable().optional()
+});
+export const TaskPackCreateBody = TaskPackSchema.pick({ pack_code: true, pack_name: true, description: true, status_scope: true, is_active: true, effective_from_utc: true, effective_to_utc: true });
+export const TaskPackUpdateBody = TaskPackCreateBody.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+// Pack Tasks
+export const PackTaskSchema = z.object({
+  pack_task_id: z.number().int().nonnegative().optional(),
+  pack_id: z.number().int().nonnegative(),
+  name: z.string().min(1).max(200),
+  sort_order: z.number().int().optional(),
+  due_days: z.number().int().optional(),
+  status_scope: z.string().max(20).nullable().optional(),
+  is_active: z.boolean().optional()
+});
+export const PackTaskCreateBody = PackTaskSchema.pick({ name: true, sort_order: true, due_days: true, status_scope: true, is_active: true });
+export const PackTaskUpdateBody = PackTaskCreateBody.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+export type TaskPack = z.infer<typeof TaskPackSchema>;
+export type PackTask = z.infer<typeof PackTaskSchema>;
+
+// Industries
+export const IndustrySchema = z.object({
+  industry_id: z.number().int().nonnegative().optional(),
+  name: z.string().min(1).max(200),
+  description: z.string().max(1000).nullable().optional(),
+  is_active: z.boolean().optional()
+});
+
+export const IndustryCreateBody = IndustrySchema.pick({ name: true, description: true, is_active: true });
+export const IndustryUpdateBody = IndustryCreateBody.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+export const ClientIndustrySchema = z.object({
+  client_id: z.number().int().nonnegative(),
+  industry_id: z.number().int().nonnegative(),
+  is_primary: z.boolean().optional()
+});
+
+export const ClientIndustryCreateBody = ClientIndustrySchema.pick({ industry_id: true, is_primary: true });
+export const ClientIndustryUpdateBody = ClientIndustryCreateBody.partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+export type Industry = z.infer<typeof IndustrySchema>;
+export type ClientIndustry = z.infer<typeof ClientIndustrySchema>;
+
+// Client Notes
+export const ClientNoteSchema = z.object({
+  note_id: z.number().int().nonnegative().optional(),
+  client_id: z.number().int().nonnegative(),
+  title: z.string().min(1).max(200),
+  content: z.string().max(10000).nullable().optional(),
+  note_type: z.string().max(50).nullable().optional(),
+  is_important: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+  created_utc: z.string().nullable().optional(),
+  updated_utc: z.string().nullable().optional(),
+  created_by: z.string().max(100).nullable().optional(),
+  updated_by: z.string().max(100).nullable().optional()
+});
+
+export const ClientNoteCreateBody = ClientNoteSchema.pick({
+  client_id: true,
+  title: true,
+  content: true,
+  note_type: true,
+  is_important: true,
+  is_active: true,
+  created_by: true
+});
+
+export const ClientNoteUpdateBody = ClientNoteSchema.pick({
+  title: true,
+  content: true,
+  note_type: true,
+  is_important: true,
+  is_active: true,
+  updated_by: true
+}).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+
+export type ClientNote = z.infer<typeof ClientNoteSchema>;

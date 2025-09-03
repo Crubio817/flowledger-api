@@ -26,7 +26,7 @@ const bool = (v: string | undefined, d = false) => {
 };
 
 export const env = {
-  port: Number(process.env.PORT || 4000),
+  port: Number(process.env.PORT || 4001),
   nodeEnv: process.env.NODE_ENV || 'development',
   jwtSecret: process.env.JWT_SECRET || 'dev-secret',
   sql: {

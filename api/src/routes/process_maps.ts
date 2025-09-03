@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ async function auditExists(auditId: number) {
   return r.recordset.length > 0;
 }
 
-/**
+/*
  * @openapi
  * /api/process-maps:
  *   get:
@@ -96,6 +97,7 @@ router.post(
       `SELECT process_map_id, audit_id, title, blob_path, file_type, uploaded_utc
        FROM app.process_maps WHERE process_map_id = @id`
     );
+    await logActivity({ type: 'AuditUpdated', title: `Process map ${process_map_id} uploaded`, audit_id });
     ok(res, r.recordset[0], 201);
   })
 );
@@ -120,6 +122,7 @@ router.put(
     const r = await pool.request().input('id', sql.Int, id).query(
       `SELECT process_map_id, audit_id, title, blob_path, file_type, uploaded_utc FROM app.process_maps WHERE process_map_id = @id`
     );
+    await logActivity({ type: 'AuditUpdated', title: `Process map ${id} updated`, audit_id: r.recordset[0].audit_id });
     ok(res, r.recordset[0]);
   })
 );
@@ -130,15 +133,20 @@ router.delete(
     const id = Number(req.params.process_map_id);
     if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'process_map_id must be a positive integer');
     const pool = await getPool();
+    // Get audit_id before deleting
+    const read = await pool.request().input('id', sql.Int, id).query(`SELECT audit_id FROM app.process_maps WHERE process_map_id = @id`);
+    if (!read.recordset[0]) return notFound(res);
+    const audit_id = read.recordset[0].audit_id;
     const result = await pool.request().input('id', sql.Int, id).query(
       `DELETE FROM app.process_maps WHERE process_map_id = @id`
     );
     if (result.rowsAffected[0] === 0) return notFound(res);
+    await logActivity({ type: 'AuditDeleted', title: `Process map ${id} deleted`, audit_id });
     ok(res, { deleted: result.rowsAffected[0] });
   })
 );
 
-/**
+/*
  * @openapi
  * /api/process-maps/upload-url:
  *   post:

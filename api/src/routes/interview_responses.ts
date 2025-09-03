@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { InterviewResponseCreateBody, InterviewResponseUpdateBody } from '../validation/schemas';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 
@@ -13,7 +14,15 @@ async function interviewExists(id: number) {
   return r.recordset.length > 0;
 }
 
-/**
+async function getAuditIdFromInterview(interviewId: number) {
+  const pool = await getPool();
+  const r = await pool.request().input('id', sql.Int, interviewId).query(
+    `SELECT audit_id FROM app.interviews WHERE interview_id = @id`
+  );
+  return r.recordset[0]?.audit_id;
+}
+
+/*
  * @openapi
  * /api/interview-responses:
  *   get:
@@ -87,6 +96,8 @@ router.post('/', asyncHandler(async (req, res) => {
     .query(`INSERT INTO app.interview_responses (response_id, interview_id, question_id, answer)
             OUTPUT INSERTED.response_id, INSERTED.interview_id, INSERTED.question_id, INSERTED.answer, INSERTED.created_utc
             VALUES (@response_id, @interview_id, @question_id, @answer)`);
+  const audit_id = await getAuditIdFromInterview(interview_id);
+  await logActivity({ type: 'AuditUpdated', title: `Interview response ${result.recordset[0].response_id} created`, audit_id });
   ok(res, result.recordset[0], 201);
 }));
 
@@ -105,6 +116,8 @@ router.put('/:response_id', asyncHandler(async (req, res) => {
   const result = await request.query(`UPDATE app.interview_responses SET ${sets.join(', ')} WHERE response_id = @id`);
   if (result.rowsAffected[0] === 0) return notFound(res);
   const r = await pool.request().input('id', sql.Int, id).query(`SELECT response_id, interview_id, question_id, answer, created_utc FROM app.interview_responses WHERE response_id = @id`);
+  const audit_id = await getAuditIdFromInterview(r.recordset[0].interview_id);
+  await logActivity({ type: 'AuditUpdated', title: `Interview response ${id} updated`, audit_id });
   ok(res, r.recordset[0]);
 }));
 
@@ -114,10 +127,16 @@ router.delete(
     const id = Number(req.params.response_id);
     if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'response_id must be a positive integer');
     const pool = await getPool();
+    // Get interview_id before deleting
+    const read = await pool.request().input('id', sql.Int, id).query(`SELECT interview_id FROM app.interview_responses WHERE response_id = @id`);
+    if (!read.recordset[0]) return notFound(res);
+    const interview_id = read.recordset[0].interview_id;
     const result = await pool.request().input('id', sql.Int, id).query(
       `DELETE FROM app.interview_responses WHERE response_id = @id`
     );
   if (result.rowsAffected[0] === 0) return notFound(res);
+    const audit_id = await getAuditIdFromInterview(interview_id);
+    await logActivity({ type: 'AuditDeleted', title: `Interview response ${id} deleted`, audit_id });
     ok(res, { deleted: result.rowsAffected[0] });
   })
 );

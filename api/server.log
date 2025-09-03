@@ -1,7 +1,4 @@
 nohup: ignoring input
-
-> flowledger-api@0.1.0 start
-> node dist/server.js
-
-API listening on http://localhost:4000 (sql.auth=sql)
+Serving openapi snapshot from /workspaces/flowledger-api/api/openapi.snapshot.json
+API listening on http://localhost:4001 (sql.auth=sql)
 [db] Connecting using auth=sql user=radar_admin

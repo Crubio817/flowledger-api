@@ -81,7 +81,21 @@ async function contactExists(contactId: number) {
  * /api/audits:
  *   get:
  *     summary: List audits
-
+ *     tags: [Audits]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1 }
+ *     responses:
+ *       200:
+ *         description: Audits list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
  *               properties:
  *                 status: { type: string, enum: [ok] }
  *                 data:
@@ -99,6 +113,7 @@ async function contactExists(contactId: number) {
  *                       percent_complete: { type: number }
  *                       created_utc: { type: string, format: date-time }
  *                       updated_utc: { type: string, format: date-time }
+ *                 meta: { $ref: '#/components/schemas/PageMeta' }
  */
 router.get(
   '/',
@@ -186,68 +201,69 @@ router.get(
   })
 );
 
-/**
- * @openapi
- * /api/audits/{audit_id}:
- *   get:
- *     summary: Get audit by id
- *     tags: [Audits]
- *     parameters:
- *       - in: path
- *         name: audit_id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status: { type: string, enum: [ok] }
- *                 data:
- *                   type: object
- *                   properties:
- *                     audit_id: { type: integer }
- *                     engagement_id: { type: integer }
- *                     client_id: { type: integer }
- *                     title: { type: string }
- *                     scope: { type: string, nullable: true }
- *                     status: { type: string }
- *                     state: { type: string }
- *                     percent_complete: { type: number }
- *                     created_utc: { type: string, format: date-time }
- *                     updated_utc: { type: string, format: date-time }
- *   put:
- *     summary: Update audit
- *     tags: [Audits]
- *     parameters:
- *       - in: path
- *         name: audit_id
- *         required: true
- *         schema: { type: integer }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title: { type: string }
- *               scope: { type: string, nullable: true }
- *               status: { type: string }
- *   delete:
- *     summary: Delete audit
- *     tags: [Audits]
- *     parameters:
- *       - in: path
- *         name: audit_id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Deleted
- */
+// Temporarily commented out to fix YAML parsing errors
+// /**
+//  * @openapi
+//  * /api/audits/{audit_id}:
+//  *   get:
+//  *     summary: "Get audit by id"
+//  *     tags: [Audits]
+//  *     parameters:
+//  *       - in: path
+//  *         name: audit_id
+//  *         required: true
+//  *         schema: { type: integer }
+//  *     responses:
+//  *       200:
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 status: { type: string, enum: [ok] }
+//  *                 data:
+//  *                   type: object
+//  *                   properties:
+//  *                     audit_id: { type: integer }
+//  *                     engagement_id: { type: integer }
+//  *                     client_id: { type: integer }
+//  *                     title: { type: string }
+//  *                     scope: { type: string, nullable: true }
+//  *                     status: { type: string }
+//  *                     state: { type: string }
+//  *                     percent_complete: { type: number }
+//  *                     created_utc: { type: string, format: date-time }
+//  *                     updated_utc: { type: string, format: date-time }
+//  *   put:
+//  *     summary: Update audit
+//  *     tags: [Audits]
+//  *     parameters:
+//  *       - in: path
+//  *         name: audit_id
+//  *         required: true
+//  *         schema: { type: integer }
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *             schema:
+//  *               type: object
+//  *               properties:
+//  *                 title: { type: string }
+//  *                 scope: { type: string, nullable: true }
+//  *                 status: { type: string }
+//  *   delete:
+//  *     summary: Delete audit
+//  *     tags: [Audits]
+//  *     parameters:
+//  *       - in: path
+//  *         name: audit_id
+//  *         required: true
+//  *         schema: { type: integer }
+//  *     responses:
+//  *       200:
+//  *         description: Deleted
+//  */
 router.get(
   '/:audit_id',
   asyncHandler(async (req, res) => {
@@ -259,10 +275,10 @@ router.get(
       const sp = await pool.request().input('audit_id', sql.Int, auditId).execute('app.sp_audit_get');
       // sp.recordsets: first recordset header, second recordset progress rows (if the proc returns multiple sets)
       const spAny: any = sp;
-  const header = (spAny.recordsets && spAny.recordsets[0] && spAny.recordsets[0][0]) || null;
-      const progress = (spAny.recordsets && spAny.recordsets[1]) || [];
+      const header = (spAny.recordsets && spAny.recordsets[0] && spAny.recordsets[0][0]) || null;
+      const steps = (spAny.recordsets && spAny.recordsets[1]) || [];
       if (!header) return notFound(res);
-  ok(res, { ...normalizeAuditRow(header), progress });
+      ok(res, { header: normalizeAuditRow(header), steps });
       return;
     } catch (e) {
       // If stored proc not found or fails, fall back to direct select
@@ -287,10 +303,10 @@ router.get(
         colOrNull(cols, 'created_utc'),
         colOrNull(cols, 'updated_utc')
       ].join(', ');
-      const result = await pool.request().input('id', sql.Int, auditId).query(`SELECT ${select} FROM app.audits WHERE ${cols.has('audit_id') ? 'audit_id = @id' : '1=0'}`);
+      const result = await pool.request().input('id', sql.BigInt, auditId).query(`SELECT ${select} FROM app.audits WHERE ${cols.has('audit_id') ? 'audit_id = @id' : '1=0'}`);
       const row = result.recordset[0];
       if (!row) return notFound(res);
-  ok(res, normalizeAuditRow(row));
+      ok(res, { header: normalizeAuditRow(row), steps: [] });
       return;
     }
   })
@@ -302,122 +318,116 @@ router.post(
     const parsed = AuditCreateBody.safeParse(req.body);
     if (!parsed.success) return badRequest(res, parsed.error.issues.map(i => i.message).join('; '));
     const data = parsed.data;
-  const pool = await getPool();
+    const pool = await getPool();
 
-  // Validate referenced engagement first to avoid FK errors from the DB
-  const engagementId = (data as any).engagement_id;
-  if (engagementId !== undefined && engagementId !== null && !(await engagementExists(engagementId))) return badRequest(res, 'engagement_id does not exist');
+    // Validate referenced engagement first to avoid FK errors from the DB
+    const engagementId = (data as any).engagement_id;
+    if (engagementId !== undefined && engagementId !== null && !(await engagementExists(engagementId))) return badRequest(res, 'engagement_id does not exist');
 
-  // Validate path and contact references to fail fast with 400
-  const pathId = (data as any).path_id;
-  if (pathId !== undefined && pathId !== null && !(await pathExists(pathId))) return badRequest(res, 'path_id does not exist');
-  const ownerContactId = (data as any).owner_contact_id;
-  if (ownerContactId !== undefined && ownerContactId !== null && !(await contactExists(ownerContactId))) return badRequest(res, 'owner_contact_id does not exist');
-
-  // Prefer stored procedure that encapsulates creation logic
-  try {
-      const reqsp = pool.request()
-        .input('engagement_id', sql.Int, (data as any).engagement_id ?? null)
-        .input('title', sql.NVarChar(200), data.title ?? null)
-        .input('domain', sql.NVarChar(50), data.domain ?? null)
-        .input('audit_type', sql.NVarChar(80), data.audit_type ?? null)
-        .input('owner_contact_id', sql.Int, data.owner_contact_id ?? null)
-        .input('path_id', sql.Int, data.path_id ?? null)
-        .input('owner_user_id', sql.Int, null); // optional placeholder
-
-      // Execute the SP but specially handle the parse-time SQL error about missing client_id
-      let sp: any;
-      try {
-        sp = await reqsp.execute('app.sp_audit_create');
-      } catch (err: any) {
-        const msg = String(err && err.message ? err.message : err);
-        if (msg.includes("Invalid column name 'client_id'") || msg.includes('Invalid column name \"client_id\"')) {
-          // Treat this as a stored-proc failure caused by schema drift and fall through to the fallback insert below
-          console.warn('sp_audit_create parse error detected (missing client_id) — falling back to safe INSERT');
-          throw { __SP_SCHEMA_MISMATCH: true, original: err };
-        }
-        throw err;
-      }
-
-      // Expect the SP to return the created audit as the first recordset row or an output param
-      let created: any = (sp.recordset && sp.recordset[0]) || (sp.output && sp.output.audit_id ? { audit_id: sp.output.audit_id } : null);
-      // If proc didn't populate client_id (schema changed), try to derive it from engagement_id
-      if (created && (created.client_id === undefined || created.client_id === null) && created.engagement_id) {
-        const r = await pool.request().input('id', sql.Int, created.engagement_id).query(`SELECT client_id FROM app.client_engagements WHERE engagement_id=@id`);
-        const cid = r.recordset[0] && r.recordset[0].client_id;
-        if (cid) created.client_id = cid;
-      }
-  // Normalize numeric fields and set Location header for convenience
-  normalizeAuditRow(created);
-  if (created && created.audit_id) res.setHeader('Location', `/audits/${created.audit_id}`);
-  await logActivity({ type: 'AuditCreated', title: `Audit ${data.title} created`, audit_id: created?.audit_id, client_id: created?.client_id ?? null });
-  ok(res, created, 201);
-      return;
-    } catch (e: any) {
-      // If we threw our sentinel to indicate the SP referenced a removed column, clear the error and proceed with fallback
-      if (e && e.__SP_SCHEMA_MISMATCH) {
-        // continue to fallback insert — do not expose the SQL error to the client
-      } else {
-        // For any other error we still fall back to INSERT; do not leak driver errors to callers
-      }
-      // Fall back to previous insert behavior if SP is not available
-      const cols = await getAuditColumns();
-  const audit_id = (data as any).audit_id;
-  const client_id = (data as any).client_id;
-  if (client_id !== undefined && !(await clientExists(client_id))) return badRequest(res, 'client_id does not exist');
-      const title = data.title;
-      const scope = data.scope ?? null;
-      const status = data.status ?? null;
-      const state = data.state ?? null;
-      const domain = data.domain ?? null;
-      const audit_type = data.audit_type ?? null;
-      const path_id = data.path_id ?? null;
-      const current_step_id = data.current_step_id ?? null;
-      const start_utc = data.start_utc ?? null;
-      const end_utc = data.end_utc ?? null;
-      const owner_contact_id = data.owner_contact_id ?? null;
-      const notes = data.notes ?? null;
-
-  const insertCols: string[] = [];
-  const insertVals: string[] = [];
-  const request = pool.request();
-  if (cols.has('audit_id') && audit_id !== undefined && audit_id !== null) { insertCols.push('audit_id'); insertVals.push('@audit_id'); request.input('audit_id', sql.Int, audit_id); }
-  if (cols.has('client_id') && client_id !== undefined && client_id !== null) { insertCols.push('client_id'); insertVals.push('@client_id'); request.input('client_id', sql.Int, client_id); }
-  // Ensure engagement_id is included in INSERT when available (table requires it)
-  if (cols.has('engagement_id')) { insertCols.push('engagement_id'); insertVals.push('@engagement_id'); request.input('engagement_id', sql.Int, engagementId ?? null); }
-
-      if (cols.has('title')) { insertCols.push('title'); insertVals.push('@title'); request.input('title', sql.NVarChar(200), title); }
-      if (cols.has('scope')) { insertCols.push('scope'); insertVals.push('@scope'); request.input('scope', sql.NVarChar(1000), scope); }
-      if (cols.has('status')) { insertCols.push('status'); insertVals.push('COALESCE(@status, N\'InProgress\')'); request.input('status', sql.NVarChar(40), status); }
-      if (cols.has('state')) { insertCols.push('state'); insertVals.push('@state'); request.input('state', sql.NVarChar(30), state); }
-      if (cols.has('domain')) { insertCols.push('domain'); insertVals.push('@domain'); request.input('domain', sql.NVarChar(50), domain); }
-      if (cols.has('audit_type')) { insertCols.push('audit_type'); insertVals.push('@audit_type'); request.input('audit_type', sql.NVarChar(80), audit_type); }
-      if (cols.has('path_id')) { insertCols.push('path_id'); insertVals.push('@path_id'); request.input('path_id', sql.Int, path_id); }
-      if (cols.has('current_step_id')) { insertCols.push('current_step_id'); insertVals.push('@current_step_id'); request.input('current_step_id', sql.Int, current_step_id); }
-      if (cols.has('start_utc')) { insertCols.push('start_utc'); insertVals.push('@start_utc'); request.input('start_utc', sql.DateTime2, start_utc); }
-      if (cols.has('end_utc')) { insertCols.push('end_utc'); insertVals.push('@end_utc'); request.input('end_utc', sql.DateTime2, end_utc); }
-      if (cols.has('owner_contact_id')) { insertCols.push('owner_contact_id'); insertVals.push('@owner_contact_id'); request.input('owner_contact_id', sql.Int, owner_contact_id); }
-      if (cols.has('notes')) { insertCols.push('notes'); insertVals.push('@notes'); request.input('notes', sql.NVarChar(sql.MAX), notes); }
-
-      await request.query(`INSERT INTO app.audits (${insertCols.join(',')}) VALUES (${insertVals.join(',')})`);
-      const read = await pool.request().input('id', sql.Int, audit_id).query(`SELECT ${[
-        colOrNull(cols,'audit_id'), colOrNull(cols,'engagement_id'), colOrNull(cols,'client_id'),
-        colOrNull(cols,'title'), colOrNull(cols,'scope'), colOrNull(cols,'status'), colOrNull(cols,'percent_complete'), colOrNull(cols,'state'), colOrNull(cols,'domain'), colOrNull(cols,'audit_type'), colOrNull(cols,'path_id'), colOrNull(cols,'current_step_id'), colOrNull(cols,'start_utc'), colOrNull(cols,'end_utc'), colOrNull(cols,'owner_contact_id'), colOrNull(cols,'notes'),
-        colOrNull(cols,'created_utc'), colOrNull(cols,'updated_utc')
-      ].join(', ')} FROM app.audits WHERE ${cols.has('audit_id') ? 'audit_id = @id' : '1=0'}`);
-      const created = read.recordset[0];
-      // derive client_id from engagement if needed
-      if (created && (created.client_id === undefined || created.client_id === null) && created.engagement_id) {
-        const r2 = await pool.request().input('id', sql.Int, created.engagement_id).query(`SELECT client_id FROM app.client_engagements WHERE engagement_id=@id`);
-        const cid2 = r2.recordset[0] && r2.recordset[0].client_id;
-        if (cid2) created.client_id = cid2;
-      }
-      normalizeAuditRow(created);
-      if (created && created.audit_id) res.setHeader('Location', `/audits/${created.audit_id}`);
-      await logActivity({ type: 'AuditCreated', title: `Audit ${title} created`, audit_id, client_id: created?.client_id ?? null });
-      ok(res, created, 201);
-      return;
+    // Validate contact; for path we will attempt the proc even if local check fails and let DB enforce
+    const pathIdRaw = (data as any).path_id;
+    const pathId = (pathIdRaw === undefined || pathIdRaw === null) ? null : Number(pathIdRaw);
+    if (Number.isNaN(pathId as any)) return badRequest(res, 'path_id must be a number when provided');
+    if ((data as any).owner_contact_id !== undefined && (data as any).owner_contact_id !== null && !(await contactExists((data as any).owner_contact_id))) return badRequest(res, 'owner_contact_id does not exist');
+    if (pathId !== null) {
+      console.log(`[audits] create request with path_id=${pathId}, engagement_id=${engagementId}, client_id=${(data as any).client_id}`);
     }
+    const ownerContactId = (data as any).owner_contact_id;
+    if (ownerContactId !== undefined && ownerContactId !== null && !(await contactExists(ownerContactId))) return badRequest(res, 'owner_contact_id does not exist');
+
+    // If path_id is provided, use sp_audit_set_path_initialize for creation and seeding
+    if (pathId !== null) {
+      try {
+        const clientId = (data as any).client_id ?? null;
+        const ownerContactId = (data as any).owner_contact_id ?? null;
+        const domain = (data as any).domain ?? null;
+        const title = data.title;
+        console.log(`[audits] invoking sp_audit_set_path_initialize path_id=${pathId} engagement_id=${engagementId} client_id=${clientId}`);
+        const sp = await pool.request()
+          .input('audit_id', sql.BigInt, null) // NULL to indicate creation
+          .input('engagement_id', sql.BigInt, engagementId ?? null)
+          .input('client_id', sql.BigInt, clientId)
+          .input('title', sql.NVarChar(200), title)
+          .input('domain', sql.NVarChar(50), domain)
+          .input('owner_contact_id', sql.Int, ownerContactId)
+          .input('path_id', sql.Int, pathId)
+          .execute('app.sp_audit_set_path_initialize');
+
+        // sp returns two result sets: first is audit header, second is steps
+        const spAny: any = sp;
+        const header = (spAny.recordsets && spAny.recordsets[0] && spAny.recordsets[0][0]) || null;
+        let steps = (spAny.recordsets && spAny.recordsets[1]) || [];
+
+        normalizeAuditRow(header);
+        if (header && header.audit_id) res.setHeader('Location', `/audits/${header.audit_id}`);
+        // If for some reason the proc did not return steps, do a quick fetch to include in response
+        if (header?.audit_id && (!steps || steps.length === 0) && pathId !== null) {
+          try {
+            const rs = await pool.request()
+              .input('aid', sql.BigInt, header.audit_id)
+              .query(`SELECT ps.step_id, ps.path_id, ps.seq, ps.title, ps.state_gate, ps.required, ps.agent_key,
+                             ps.input_contract, ps.output_contract, ps.created_utc,
+                             asp.status, asp.started_utc, asp.completed_utc, asp.output_json, asp.notes,
+                             asp.created_utc AS progress_created_utc, asp.updated_utc AS progress_updated_utc
+                      FROM app.path_steps ps
+                      LEFT JOIN app.audit_step_progress asp ON asp.step_id = ps.step_id AND asp.audit_id = @aid
+                      WHERE ps.path_id = ${pathId}
+                      ORDER BY ps.seq`);
+            steps = rs.recordset || [];
+          } catch {}
+        }
+        await logActivity({ type: 'AuditCreated', title: `Audit ${data.title} created`, audit_id: header?.audit_id, client_id: null });
+        ok(res, { header, steps }, 201);
+        return;
+      } catch (e: any) {
+        console.error('[audits] sp_audit_set_path_initialize failed:', e?.message || e);
+        badRequest(res, e?.message || 'Failed to create audit with path (proc error)');
+        return;
+      }
+    }
+
+    // No path_id: plain INSERT
+    const cols = await getAuditColumns();
+    const title = data.title;
+    const scope = data.scope ?? null;
+    const status = data.status ?? null;
+    const state = data.state ?? null;
+    const domain = data.domain ?? null;
+    const audit_type = data.audit_type ?? null;
+    const current_step_id = data.current_step_id ?? null;
+    const start_utc = data.start_utc ?? null;
+    const end_utc = data.end_utc ?? null;
+    const notes = data.notes ?? null;
+
+    const insertCols: string[] = [];
+    const insertVals: string[] = [];
+    const request = pool.request();
+    // Ensure engagement_id is included in INSERT when available (table requires it)
+    if (cols.has('engagement_id')) { insertCols.push('engagement_id'); insertVals.push('@engagement_id'); request.input('engagement_id', sql.BigInt, engagementId ?? null); }
+
+    if (cols.has('title')) { insertCols.push('title'); insertVals.push('@title'); request.input('title', sql.NVarChar(200), title); }
+    if (cols.has('scope')) { insertCols.push('scope'); insertVals.push('@scope'); request.input('scope', sql.NVarChar(1000), scope); }
+    if (cols.has('phase')) { insertCols.push('phase'); insertVals.push('COALESCE(@status, N\'InProgress\')'); request.input('status', sql.NVarChar(40), status); }
+    if (cols.has('state')) { insertCols.push('state'); insertVals.push('@state'); request.input('state', sql.NVarChar(30), state); }
+    if (cols.has('domain')) { insertCols.push('domain'); insertVals.push('@domain'); request.input('domain', sql.NVarChar(50), domain); }
+    if (cols.has('audit_type')) { insertCols.push('audit_type'); insertVals.push('@audit_type'); request.input('audit_type', sql.NVarChar(80), audit_type); }
+    if (cols.has('current_step_id')) { insertCols.push('current_step_id'); insertVals.push('@current_step_id'); request.input('current_step_id', sql.Int, current_step_id); }
+    if (cols.has('start_utc')) { insertCols.push('start_utc'); insertVals.push('@start_utc'); request.input('start_utc', sql.DateTime2, start_utc); }
+    if (cols.has('end_utc')) { insertCols.push('end_utc'); insertVals.push('@end_utc'); request.input('end_utc', sql.DateTime2, end_utc); }
+    if (cols.has('owner_contact_id')) { insertCols.push('owner_contact_id'); insertVals.push('@owner_contact_id'); request.input('owner_contact_id', sql.Int, ownerContactId); }
+    if (cols.has('notes')) { insertCols.push('notes'); insertVals.push('@notes'); request.input('notes', sql.NVarChar(sql.MAX), notes); }
+
+    await request.query(`INSERT INTO app.audits (${insertCols.join(',')}) VALUES (${insertVals.join(',')})`);
+    const read = await pool.request().query(`SELECT ${[
+      colOrNull(cols,'audit_id'), colOrNull(cols,'engagement_id'),
+      colOrNull(cols,'title'), colOrNull(cols,'scope'), colOrNull(cols,'phase'), colOrNull(cols,'percent_complete'), colOrNull(cols,'state'), colOrNull(cols,'domain'), colOrNull(cols,'audit_type'), colOrNull(cols,'path_id'), colOrNull(cols,'current_step_id'), colOrNull(cols,'start_utc'), colOrNull(cols,'end_utc'), colOrNull(cols,'owner_contact_id'), colOrNull(cols,'notes'),
+      colOrNull(cols,'created_utc'), colOrNull(cols,'updated_utc')
+    ].join(', ')} FROM app.audits WHERE audit_id = SCOPE_IDENTITY()`);
+    const created = read.recordset[0];
+    normalizeAuditRow(created);
+    if (created && created.audit_id) res.setHeader('Location', `/audits/${created.audit_id}`);
+    await logActivity({ type: 'AuditCreated', title: `Audit ${title} created`, audit_id: created?.audit_id, client_id: null });
+    ok(res, { header: created, steps: [] }, 201);
   })
 );
 
@@ -431,8 +441,12 @@ router.put(
     if (!Number.isInteger(pathId) || pathId <= 0) return badRequest(res, 'path_id must be a positive integer');
     const pool = await getPool();
     try {
-      const sp = await pool.request().input('audit_id', sql.Int, auditId).input('path_id', sql.Int, pathId).execute('app.sp_audit_set_path_initialize');
-      ok(res, sp.recordset && sp.recordset[0] ? sp.recordset[0] : { success: true });
+      const sp = await pool.request().input('audit_id', sql.BigInt, auditId).input('path_id', sql.Int, pathId).execute('app.sp_audit_set_path_initialize');
+      const spAny: any = sp;
+      const header = (spAny.recordsets && spAny.recordsets[0] && spAny.recordsets[0][0]) || null;
+      const steps = (spAny.recordsets && spAny.recordsets[1]) || [];
+      if (!header) return notFound(res);
+      ok(res, { header: normalizeAuditRow(header), steps });
     } catch (e: any) {
       badRequest(res, e?.message || 'Failed to set path');
     }
@@ -529,7 +543,7 @@ router.put(
   const request = pool.request().input('id', sql.Int, auditId);
   if (data.title !== undefined && cols.has('title')) { sets.push('title = @title'); request.input('title', sql.NVarChar(200), data.title); }
   if (data.scope !== undefined && cols.has('scope')) { sets.push('scope = @scope'); request.input('scope', sql.NVarChar(1000), data.scope); }
-  if (data.status !== undefined && cols.has('status')) { sets.push('status = @status'); request.input('status', sql.NVarChar(40), data.status); }
+  if (data.status !== undefined && cols.has('phase')) { sets.push('phase = @status'); request.input('status', sql.NVarChar(40), data.status); }
   if (data.state !== undefined && cols.has('state')) { sets.push('state = @state'); request.input('state', sql.NVarChar(30), data.state); }
   if (data.domain !== undefined && cols.has('domain')) { sets.push('domain = @domain'); request.input('domain', sql.NVarChar(50), data.domain); }
   if (data.audit_type !== undefined && cols.has('audit_type')) { sets.push('audit_type = @audit_type'); request.input('audit_type', sql.NVarChar(80), data.audit_type); }

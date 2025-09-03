@@ -2,9 +2,78 @@ import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { ContactSocialProfileCreate, ContactSocialProfileUpdate } from '../validation/schemas';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/contact-social-profiles:
+ *   get:
+ *     summary: List contact social profiles
+ *     tags: [ContactSocialProfiles]
+ *     responses:
+ *       200:
+ *         description: Profiles list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: integer }
+ *                       contact_id: { type: integer }
+ *                       provider: { type: string }
+ *                       profile_url: { type: string }
+ *                       is_primary: { type: boolean }
+ *                       created_utc: { type: string, format: date-time }
+ *                       updated_utc: { type: string, format: date-time }
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     page: { type: integer }
+ *                     limit: { type: integer }
+ *                     total: { type: integer }
+ *   post:
+ *     summary: Create contact social profile
+ *     tags: [ContactSocialProfiles]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [contact_id, provider, profile_url]
+ *             properties:
+ *               contact_id: { type: integer }
+ *               provider: { type: string }
+ *               profile_url: { type: string }
+ *               is_primary: { type: boolean }
+ *     responses:
+ *       201:
+ *         description: Profile created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer }
+ *                     contact_id: { type: integer }
+ *                     provider: { type: string }
+ *                     profile_url: { type: string }
+ *                     is_primary: { type: boolean }
+ *                     created_utc: { type: string, format: date-time }
+ *                     updated_utc: { type: string, format: date-time }
+ */
 router.get('/', asyncHandler(async (req, res) => {
   const pool = await getPool();
   const r = await pool.request().query(`SELECT id, contact_id, provider, profile_url, is_primary, created_utc, updated_utc FROM app.contact_social_profiles ORDER BY id DESC`);
@@ -24,7 +93,104 @@ router.post('/', asyncHandler(async (req, res) => {
     .query(`INSERT INTO app.contact_social_profiles (contact_id, provider, profile_url, is_primary)
             OUTPUT INSERTED.id, INSERTED.contact_id, INSERTED.provider, INSERTED.profile_url, INSERTED.is_primary, INSERTED.created_utc, INSERTED.updated_utc
             VALUES (@contact_id, @provider, @profile_url, @is_primary)`);
+  await logActivity({ type: 'ContactSocialProfileCreated', title: `Created social profile ${provider} for contact ${contact_id}`, client_id: null });
   ok(res, result.recordset[0], 201);
+}));
+/**
+ * @openapi
+ * /api/contact-social-profiles/{id}:
+ *   get:
+ *     summary: Get contact social profile by id
+ *     tags: [ContactSocialProfiles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer }
+ *                     contact_id: { type: integer }
+ *                     provider: { type: string }
+ *                     profile_url: { type: string }
+ *                     is_primary: { type: boolean }
+ *                     created_utc: { type: string, format: date-time }
+ *                     updated_utc: { type: string, format: date-time }
+ *   patch:
+ *     summary: Update contact social profile
+ *     tags: [ContactSocialProfiles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               contact_id: { type: integer }
+ *               provider: { type: string }
+ *               profile_url: { type: string }
+ *               is_primary: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer }
+ *                     contact_id: { type: integer }
+ *                     provider: { type: string }
+ *                     profile_url: { type: string }
+ *                     is_primary: { type: boolean }
+ *                     created_utc: { type: string, format: date-time }
+ *                     updated_utc: { type: string, format: date-time }
+ *   delete:
+ *     summary: Delete contact social profile
+ *     tags: [ContactSocialProfiles]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     deleted: { type: integer }
+ */
+router.get('/:id', asyncHandler(async (req, res) => {
+  const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer');
+  const pool = await getPool();
+  const r = await pool.request().input('id', sql.BigInt, id).query(`SELECT id, contact_id, provider, profile_url, is_primary, created_utc, updated_utc FROM app.contact_social_profiles WHERE id=@id`);
+  const row = r.recordset[0]; if (!row) return notFound(res); ok(res, row);
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
@@ -46,9 +212,10 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   const result = await request.query(`UPDATE app.contact_social_profiles SET ${sets.join(', ')} WHERE id=@id`);
   if (result.rowsAffected[0]===0) return notFound(res);
   const read = await pool.request().input('id', sql.BigInt, id).query(`SELECT id, contact_id, provider, profile_url, is_primary, created_utc, updated_utc FROM app.contact_social_profiles WHERE id=@id`);
+  await logActivity({ type: 'ContactSocialProfileUpdated', title: `Updated social profile ${id}`, client_id: null });
   ok(res, read.recordset[0]);
 }));
 
-router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer'); const pool = await getPool(); const r = await pool.request().input('id', sql.BigInt, id).query(`DELETE FROM app.contact_social_profiles WHERE id=@id`); if (r.rowsAffected[0]===0) return notFound(res); ok(res, { deleted: r.rowsAffected[0] }); }));
+router.delete('/:id', asyncHandler(async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'id must be a positive integer'); const pool = await getPool(); const r = await pool.request().input('id', sql.BigInt, id).query(`DELETE FROM app.contact_social_profiles WHERE id=@id`); if (r.rowsAffected[0]===0) return notFound(res); await logActivity({ type: 'ContactSocialProfileDeleted', title: `Deleted social profile ${id}`, client_id: null }); ok(res, { deleted: r.rowsAffected[0] }); }));
 
 export default router;

@@ -45,7 +45,22 @@ async function main() {
     WHERE s.name = 'app'
     ORDER BY p.name`);
 
-  console.log(JSON.stringify({ tables: rows, views: views.recordset, procs: procs.recordset }, null, 2));
+  // Get parameters for sp_create_client procedure
+  const procParams = await pool.request().input('proc', sql.NVarChar(128), 'sp_create_client').query(`
+    SELECT p.name AS parameter_name, TYPE_NAME(p.user_type_id) AS data_type,
+           p.max_length, p.is_nullable, p.parameter_id, p.default_value
+    FROM sys.parameters p
+    JOIN sys.procedures pr ON p.object_id = pr.object_id
+    JOIN sys.schemas s ON pr.schema_id = s.schema_id
+    WHERE s.name = 'app' AND pr.name = @proc
+    ORDER BY p.parameter_id`);
+
+  console.log(JSON.stringify({ 
+    tables: rows, 
+    views: views.recordset, 
+    procs: procs.recordset,
+    sp_create_client_params: procParams.recordset
+  }, null, 2));
   process.exit(0);
 }
 

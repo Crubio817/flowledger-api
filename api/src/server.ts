@@ -25,6 +25,9 @@ import pathSteps from './routes/path_steps';
 import auditStepProgress from './routes/audit_step_progress';
 import auto from './routes/auto';
 import ai from './routes/ai';
+import taskPacks from './routes/task_packs';
+import industries from './routes/industries';
+import clientNotes from './routes/client_notes';
 import { setupOpenApi } from './docs/openapi';
 
 export async function createApp() {
@@ -39,9 +42,11 @@ export async function createApp() {
     console.error('[startup] Server will still start, but DB-backed endpoints may fail until settings are fixed.');
   }
   const app = express();
-app.use(helmet());
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+  // Minimal middleware: enable JSON parsing and CORS for API routes
+  // You can re-enable helmet if needed once routes are stable
+  // app.use(helmet());
+  app.use(cors());
+  app.use(express.json({ limit: '1mb' }));
 
 /**
  * @openapi
@@ -92,11 +97,20 @@ app.use('/api/contact-social-profiles', contactSocialProfiles);
 app.use('/api/path-templates', pathTemplates);
 app.use('/api/path-steps', pathSteps);
 app.use('/api/audit-step-progress', auditStepProgress);
+app.use('/api/task-packs', taskPacks);
+app.use('/api/industries', industries);
+app.use('/api', clientNotes);
 
 app.use(errorHandler);
 
 // OpenAPI (must be after routes so annotations are picked up by scanner)
-setupOpenApi(app);
+    try {
+      const { setupOpenApi } = await import('./docs/openapi');
+      setupOpenApi(app);
+    } catch (e) {
+      console.warn('[startup] OpenAPI setup failed:', e);
+    }
+// setupOpenApi(app);
   return app;
 }
 

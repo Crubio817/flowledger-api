@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, notFound, listOk } from '../utils/http';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.get(
   })
 );
 
-/**
+/*
  * @openapi
  * /api/findings/{audit_id}:
  *   get:
@@ -85,7 +86,7 @@ router.get(
   })
 );
 
-/**
+/*
  * @openapi
  * /api/findings/{audit_id}:
  *   put:
@@ -147,6 +148,7 @@ router.put(
       opportunities_json: safeParseJson(row.opportunities_json),
       recommendations_json: safeParseJson(row.recommendations_json),
     };
+    await logActivity({ type: 'AuditUpdated', title: `Findings updated for audit ${id}`, audit_id: id });
     ok(res, parsed);
   })
 );

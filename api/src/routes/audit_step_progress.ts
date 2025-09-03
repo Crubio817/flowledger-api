@@ -78,9 +78,13 @@ router.delete('/:progress_id', asyncHandler(async (req, res) => {
   const id = Number(req.params.progress_id);
   if (!Number.isInteger(id) || id <= 0) return badRequest(res, 'progress_id must be a positive integer');
   const pool = await getPool();
+  // Get audit_id before deleting
+  const read = await pool.request().input('id', sql.Int, id).query(`SELECT audit_id FROM app.audit_step_progress WHERE progress_id=@id`);
+  if (!read.recordset[0]) return notFound(res);
+  const audit_id = read.recordset[0].audit_id;
   const result = await pool.request().input('id', sql.Int, id).query(`DELETE FROM app.audit_step_progress WHERE progress_id=@id`);
   if (result.rowsAffected[0] === 0) return notFound(res);
-  await logActivity({ type: 'AuditDeleted', title: `Progress ${id} deleted`, audit_id: id });
+  await logActivity({ type: 'AuditDeleted', title: `Progress ${id} deleted`, audit_id });
   ok(res, { deleted: result.rowsAffected[0] });
 }));
 

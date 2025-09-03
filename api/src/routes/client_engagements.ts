@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound, getPagination } from '../utils/http';
 import { ClientEngagementCreate, ClientEngagementUpdate } from '../validation/schemas';
+import { logActivity } from '../utils/activity';
 
 const router = Router();
 

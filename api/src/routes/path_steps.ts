@@ -67,10 +67,10 @@ router.put('/:step_id', asyncHandler(async (req, res) => {
   if (data.input_contract !== undefined) { sets.push('input_contract = @input_contract'); request.input('input_contract', sql.NVarChar(sql.MAX), data.input_contract); }
   if (data.output_contract !== undefined) { sets.push('output_contract = @output_contract'); request.input('output_contract', sql.NVarChar(sql.MAX), data.output_contract); }
   if (!sets.length) return badRequest(res, 'No fields to update');
-  sets.push('created_utc = created_utc');
   const result = await request.query(`UPDATE app.path_steps SET ${sets.join(', ')} WHERE step_id = @id`);
   if (result.rowsAffected[0] === 0) return notFound(res);
   const read = await pool.request().input('id', sql.Int, id).query(`SELECT step_id, path_id, seq, title, state_gate, required, agent_key, input_contract, output_contract, created_utc FROM app.path_steps WHERE step_id=@id`);
+  await logActivity({ type: 'AuditUpdated', title: `PathStep ${id} updated`, client_id: null });
   ok(res, read.recordset[0]);
 }));
 
