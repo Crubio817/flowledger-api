@@ -4,6 +4,7 @@ import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { ClientCreateBody, ClientUpdateBody, CreateProcBody, ClientSetupBody } from '../validation/schemas';
 import { orchestrateClientSetup } from '../utils/clientSetup';
 import { logActivity } from '../utils/activity';
+import { chatOnce } from '../services/ai';
 
 const router = Router();
 
@@ -553,6 +554,105 @@ router.post(
     if (!row) return notFound(res);
     const result = await orchestrateClientSetup({ client_id: clientId, client_name: parsed.data.client_name || row.name, playbook_code: parsed.data.playbook_code, owner_user_id: parsed.data.owner_user_id });
     ok(res, result);
+  })
+);
+
+/**
+ * @openapi
+ * /api/clients/fetch-from-url:
+ *   post:
+ *     summary: Fetch and extract client data from a URL (e.g., LinkedIn)
+ *     tags: [Clients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [url]
+ *             properties:
+ *               url: { type: string, description: 'URL to fetch data from' }
+ *     responses:
+ *       200:
+ *         description: Extracted client data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status: { type: string, enum: [ok] }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     name: { type: string }
+ *                     contact: 
+ *                       type: object
+ *                       properties:
+ *                         first_name: { type: string }
+ *                         last_name: { type: string }
+ *                         email: { type: string }
+ *                         phone: { type: string }
+ *                         title: { type: string }
+ *                     location:
+ *                       type: object
+ *                       properties:
+ *                         city: { type: string }
+ *                         state_province: { type: string }
+ *                         country: { type: string }
+ *                         postal_code: { type: string }
+ *                     industry: { type: string }
+ *                     notes: { type: string }
+ *                     client_note: 
+ *                       type: object
+ *                       properties:
+ *                         title: { type: string }
+ *                         content: { type: string }
+ *                         note_type: { type: string }
+ *                     social_profiles:
+ *                       type: array
+ *                       items: { type: string }
+ */
+router.post(
+  '/fetch-from-url',
+  asyncHandler(async (req, res) => {
+    const { url } = req.body || {};
+    if (!url || typeof url !== 'string') return badRequest(res, 'url required');
+
+    try {
+      // Fetch the HTML content from the URL
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Failed to fetch URL: ${response.status}`);
+      const html = await response.text();
+
+      // Prepare the prompt for OpenAI
+      const prompt = `
+Extract the following information from this LinkedIn company page HTML. Return only a JSON object with the specified fields. If a field is not found, use null.
+
+Fields to extract:
+- name: Company name
+- contact: Object with first_name, last_name, email, phone, title (primary contact if available)
+- location: Object with city, state_province, country, postal_code
+- industry: Industry/sector
+- notes: Brief summary or description
+- client_note: Object with title (e.g., "LinkedIn Summary"), content (full about section), note_type ("linkedin_summary")
+- social_profiles: Array of URLs (LinkedIn, website, etc.)
+
+HTML content:
+${html.substring(0, 10000)} // Limit to first 10k chars to avoid token limits
+`;
+
+      const messages = [
+        { role: 'system' as const, content: 'You are a data extraction assistant. Always return valid JSON.' },
+        { role: 'user' as const, content: prompt }
+      ];
+
+      const aiResult = await chatOnce({ messages });
+      const extracted = JSON.parse(aiResult.content);
+
+      ok(res, extracted);
+    } catch (error) {
+      badRequest(res, `Error fetching or extracting data: ${(error as Error).message}`);
+    }
   })
 );
 
