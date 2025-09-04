@@ -3,11 +3,12 @@ import { z } from 'zod';
 export const ClientSchema = z.object({
   client_id: z.number().int().nonnegative().optional(),
   name: z.string().min(1).max(200),
-  is_active: z.boolean().optional()
+  is_active: z.boolean().optional(),
+  logo_url: z.string().url().nullable().optional()
 });
 
-export const ClientCreateBody = ClientSchema.pick({ name: true, is_active: true }).partial({ is_active: true });
-export const ClientUpdateBody = ClientSchema.pick({ name: true, is_active: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
+export const ClientCreateBody = ClientSchema.pick({ name: true, is_active: true, logo_url: true }).partial({ is_active: true, logo_url: true });
+export const ClientUpdateBody = ClientSchema.pick({ name: true, is_active: true, logo_url: true }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export const AuditSchema = z.object({
   audit_id: z.number().int().nonnegative(),
@@ -48,7 +49,8 @@ export const CreateProcBody = z.object({
   IsActive: z.boolean().optional(),
   PackCode: z.string().max(64).nullable().optional(),
   PrimaryContactId: z.number().int().nullable().optional(),
-  OwnerUserId: z.number().int().nullable().optional()
+  OwnerUserId: z.number().int().nullable().optional(),
+  LogoUrl: z.string().url().nullable().optional()
 });
 
 export const ClientSetupBody = z.object({

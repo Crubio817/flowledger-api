@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+// Load dotenv early so any services reading process.env at import time see values
+import './config/env';
 // config/env is imported dynamically to allow Key Vault secret hydration before assertions
 import { errorHandler } from './middleware/error';
 import clients from './routes/clients';

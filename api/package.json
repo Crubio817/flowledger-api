@@ -14,7 +14,7 @@
   "test": "jest --runInBand",
     "db:ping": "node scripts/db-ping.cjs",
     "db:schema": "ts-node scripts/schema-introspect.ts",
-    "gen:api:snapshot": "curl -s ${SPEC_URL:-http://localhost:4000/openapi.json} > openapi.snapshot.json"
+  "gen:api:snapshot": "node fetch-openapi.js"
   },
   "dependencies": {
     "@azure/identity": "^4.11.1",

@@ -10,9 +10,13 @@ const options: Options = {
     openapi: '3.0.3',
     info: {
       title: 'FlowLedger API',
-      version: '0.1.0',
+      version: '0.1.1',
       description: 'API for managing clients, audits, industries, and related business processes'
     },
+    servers: [
+      { url: '/', description: 'Relative to current host' },
+      { url: 'http://localhost:4001', description: 'Local dev server' }
+    ],
     tags: [
       { name: 'Clients', description: 'Client management operations' },
       { name: 'ClientContacts', description: 'Client contact management' },
@@ -22,7 +26,16 @@ const options: Options = {
       { name: 'Industries', description: 'Industry management and client-industry relationships' },
       { name: 'TaskPacks', description: 'Task pack and task management' },
       { name: 'Audits', description: 'Audit management operations' },
-      { name: 'AI', description: 'AI-powered features and tools' }
+      { name: 'AI', description: 'AI-powered features and tools' },
+      { name: 'Misc', description: 'Uncategorized endpoints (auto-grouped)' }
+    ],
+    'x-tagGroups': [
+      { name: 'Clients', tags: ['Clients', 'ClientContacts', 'ClientNotes', 'ClientTags', 'ContactSocialProfiles'] },
+      { name: 'AI', tags: ['AI'] },
+      { name: 'Industries', tags: ['Industries'] },
+      { name: 'Tasks', tags: ['TaskPacks'] },
+      { name: 'Audits', tags: ['Audits'] },
+      { name: 'Misc', tags: ['Misc'] }
     ],
     components: {
       schemas: {
@@ -268,7 +281,8 @@ const options: Options = {
           type: 'object',
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200 },
-            is_active: { type: 'boolean' }
+            is_active: { type: 'boolean' },
+            logo_url: { type: 'string', maxLength: 512, nullable: true, description: 'Public URL to the client logo (no file upload stored)' }
           },
           required: ['name']
         },
@@ -276,13 +290,146 @@ const options: Options = {
           type: 'object',
           properties: {
             name: { type: 'string', minLength: 1, maxLength: 200 },
-            is_active: { type: 'boolean' }
+            is_active: { type: 'boolean' },
+            logo_url: { type: 'string', maxLength: 512, nullable: true, description: 'Public URL to the client logo (no file upload stored)' }
           }
         },
         CreateProcBody: {
           type: 'object',
-          additionalProperties: true,
-          description: 'Dynamic body for stored procedure parameters. Keys must match stored procedure parameter names without the leading @ symbol.'
+          required: ['name'],
+          properties: {
+            name: { type: 'string', minLength: 1, maxLength: 200, description: 'The client\'s name (required)' },
+            is_active: { type: 'boolean', description: 'Whether the client is active (1) or a prospect (0). Defaults to true if not provided.' },
+            pack_code: { type: 'string', maxLength: 64, nullable: true, description: 'A code for onboarding task packs. If not provided, falls back to default tasks.' },
+            contacts_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/ContactJsonItem' },
+              nullable: true,
+              description: 'Array of contact objects to create for the client'
+            },
+            documents_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/DocumentJsonItem' },
+              nullable: true,
+              description: 'Array of document objects to create for the client'
+            },
+            industries_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/IndustryJsonItem' },
+              nullable: true,
+              description: 'Array of industry associations to create for the client'
+            },
+            integrations_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/IntegrationJsonItem' },
+              nullable: true,
+              description: 'Array of integration objects to create for the client'
+            },
+            locations_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/LocationJsonItem' },
+              nullable: true,
+              description: 'Array of location objects to create for the client'
+            },
+            notes_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/NoteJsonItem' },
+              nullable: true,
+              description: 'Array of note objects to create for the client'
+            },
+            engagement_tags_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/EngagementTagJsonItem' },
+              nullable: true,
+              description: 'Array of engagement tag associations (only applies if client is active)'
+            },
+            contact_social_profiles_json: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/ContactSocialProfileJsonItem' },
+              nullable: true,
+              description: 'Array of social profile objects to create for contacts (requires temp_contact_key from contacts_json)'
+            }
+          },
+          description: 'Request body for creating a client via stored procedure sp_create_client. Supports dynamic parameter binding with detailed JSON payloads for related entities.'
+        },
+        ContactJsonItem: {
+          type: 'object',
+          properties: {
+            first_name: { type: 'string', maxLength: 200, nullable: true },
+            last_name: { type: 'string', maxLength: 200, nullable: true },
+            email: { type: 'string', maxLength: 320, nullable: true },
+            phone: { type: 'string', maxLength: 50, nullable: true },
+            title: { type: 'string', maxLength: 200, nullable: true },
+            is_primary: { type: 'boolean' },
+            is_active: { type: 'boolean' },
+            temp_contact_key: { type: 'string', maxLength: 200, nullable: true, description: 'Temporary key to link with social profiles' }
+          }
+        },
+        DocumentJsonItem: {
+          type: 'object',
+          properties: {
+            category: { type: 'string', maxLength: 100 },
+            filename: { type: 'string', maxLength: 260 },
+            blob_url: { type: 'string', maxLength: 1000 },
+            uploaded_by_user: { type: 'integer' },
+            uploaded_utc: { type: 'string', format: 'date-time', nullable: true }
+          }
+        },
+        IndustryJsonItem: {
+          type: 'object',
+          properties: {
+            industry_id: { type: 'integer' },
+            is_primary: { type: 'boolean' }
+          }
+        },
+        IntegrationJsonItem: {
+          type: 'object',
+          properties: {
+            provider: { type: 'string', maxLength: 100 },
+            status: { type: 'string', maxLength: 50 },
+            external_account_id: { type: 'string', maxLength: 200 },
+            secret_ref: { type: 'string', maxLength: 200 }
+          }
+        },
+        LocationJsonItem: {
+          type: 'object',
+          properties: {
+            label: { type: 'string', maxLength: 200 },
+            line1: { type: 'string', maxLength: 200 },
+            line2: { type: 'string', maxLength: 200, nullable: true },
+            city: { type: 'string', maxLength: 100 },
+            state_province: { type: 'string', maxLength: 100 },
+            postal_code: { type: 'string', maxLength: 50 },
+            country: { type: 'string', maxLength: 100 },
+            is_primary: { type: 'boolean' }
+          }
+        },
+        NoteJsonItem: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', maxLength: 200 },
+            content: { type: 'string', nullable: true },
+            note_type: { type: 'string', maxLength: 50, nullable: true },
+            is_important: { type: 'boolean' },
+            is_active: { type: 'boolean' },
+            created_by: { type: 'integer', nullable: true },
+            updated_by: { type: 'integer', nullable: true }
+          }
+        },
+        EngagementTagJsonItem: {
+          type: 'object',
+          properties: {
+            tag_id: { type: 'integer' }
+          }
+        },
+        ContactSocialProfileJsonItem: {
+          type: 'object',
+          properties: {
+            temp_contact_key: { type: 'string', maxLength: 200, nullable: true, description: 'Links to contact from contacts_json' },
+            provider: { type: 'string', maxLength: 100 },
+            profile_url: { type: 'string' },
+            is_primary: { type: 'boolean' }
+          }
         },
         ClientSetupBody: {
           type: 'object',
@@ -1263,6 +1410,7 @@ const options: Options = {
                               client_id: { type: 'integer' },
                               name: { type: 'string' },
                               is_active: { type: 'boolean' },
+                              logo_url: { type: 'string', nullable: true },
                               created_utc: { type: 'string', format: 'date-time' }
                             }
                           }
@@ -1301,6 +1449,7 @@ const options: Options = {
                             client_id: { type: 'integer' },
                             name: { type: 'string' },
                             is_active: { type: 'boolean' },
+                            logo_url: { type: 'string', nullable: true },
                             created_utc: { type: 'string', format: 'date-time' }
                           }
                         }
@@ -1334,6 +1483,7 @@ const options: Options = {
                             client_id: { type: 'integer' },
                             name: { type: 'string' },
                             is_active: { type: 'boolean' },
+                            logo_url: { type: 'string', nullable: true },
                             created_utc: { type: 'string', format: 'date-time' }
                           }
                         }
@@ -1373,6 +1523,7 @@ const options: Options = {
                             client_id: { type: 'integer' },
                             name: { type: 'string' },
                             is_active: { type: 'boolean' },
+                            logo_url: { type: 'string', nullable: true },
                             created_utc: { type: 'string', format: 'date-time' }
                           }
                         }
@@ -1412,6 +1563,7 @@ const options: Options = {
                             client_id: { type: 'integer' },
                             name: { type: 'string' },
                             is_active: { type: 'boolean' },
+                            logo_url: { type: 'string', nullable: true },
                             created_utc: { type: 'string', format: 'date-time' }
                           }
                         }
@@ -1466,10 +1618,80 @@ const options: Options = {
                                 client_id: { type: 'integer' },
                                 name: { type: 'string' },
                                 is_active: { type: 'boolean' },
+                                logo_url: { type: 'string', nullable: true },
                                 created_utc: { type: 'string', format: 'date-time' }
                               }
                             },
                             proc_result: { type: 'object', additionalProperties: true }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        '/api/clients/fetch-from-url': {
+          post: {
+            tags: ['Clients'],
+            summary: 'Fetch and extract client data from a URL (e.g., LinkedIn)',
+            description: 'Extracts client data from a URL and returns it in a format compatible with the create-proc endpoint',
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['url'],
+                    properties: {
+                      url: { type: 'string', description: 'URL to fetch data from' }
+                    }
+                  }
+                }
+              }
+            },
+            responses: {
+              200: {
+                description: 'Extracted client data (compatible with create-proc endpoint)',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        status: { type: 'string', enum: ['ok'] },
+                        data: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string', nullable: true, description: 'Client name' },
+                            logo_url: { type: 'string', nullable: true, description: 'Client logo URL' },
+                            is_active: { type: 'boolean', description: 'Whether client should be active (defaults to true)' },
+                            contacts_json: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/ContactJsonItem' },
+                              description: 'Array of extracted contact objects'
+                            },
+                            locations_json: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/LocationJsonItem' },
+                              description: 'Array of extracted location objects'
+                            },
+                            industries_json: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/IndustryJsonItem' },
+                              description: 'Array of extracted industry associations'
+                            },
+                            notes_json: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/NoteJsonItem' },
+                              description: 'Array of extracted note objects'
+                            },
+                            contact_social_profiles_json: {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/ContactSocialProfileJsonItem' },
+                              description: 'Array of extracted social profile objects'
+                            }
                           }
                         }
                       }
@@ -1962,9 +2184,18 @@ export function setupOpenApi(app: Express) {
   // instead of next to the compiled code. Check both locations and log which one
   // we used so it's easier to debug "No operations defined in spec" in production.
   const candidates = [
+    // Primary locations
     path.resolve(__dirname, '../../openapi.snapshot.json'), // next to compiled code (dist/openapi.snapshot.json)
     path.resolve(process.cwd(), 'openapi.snapshot.json'), // repo root / runtime cwd
-    path.resolve(process.cwd(), 'api', 'openapi.snapshot.json') // repo api folder
+  path.resolve(process.cwd(), 'api', 'openapi.snapshot.json'), // repo api folder (if cwd is repo root)
+  // Parent-of-api fallbacks (when cwd is api/)
+  path.resolve(process.cwd(), '..', 'openapi.snapshot.json'),
+  path.resolve(process.cwd(), '..', 'api', 'openapi.snapshot.json'),
+  path.resolve(process.cwd(), '..', 'frontend-integration-package', 'openapi.snapshot.json'),
+  path.resolve(process.cwd(), '..', 'web', 'openapi.snapshot.json'),
+    // Additional fallbacks to avoid dev breakage if API snapshot wasn't generated
+  path.resolve(process.cwd(), 'frontend-integration-package', 'openapi.snapshot.json'),
+  path.resolve(process.cwd(), 'web', 'openapi.snapshot.json')
   ];
 
   let spec: any;
@@ -1974,6 +2205,9 @@ export function setupOpenApi(app: Express) {
     if (fs.existsSync(p)) {
       try {
         const raw = fs.readFileSync(p, 'utf8');
+        if (!raw || !raw.trim()) {
+          throw new Error('OpenAPI snapshot file is empty');
+        }
         spec = JSON.parse(raw);
         usedSnapshot = p;
         break;
@@ -1983,10 +2217,11 @@ export function setupOpenApi(app: Express) {
     }
   }
 
-  if (!spec) {
+  const preferLive = process.env.OPENAPI_USE_SNAPSHOT === 'false';
+  if (!spec || preferLive) {
     // No snapshot found or all failed to parse — fall back to swagger-jsdoc generated spec
     spec = swaggerJSDoc(options);
-    console.warn('No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.');
+    if (!usedSnapshot) console.warn('No openapi.snapshot.json found; using swagger-jsdoc generated spec. This may result in empty paths in production.');
   }
 
   // Merge additions from plausible locations (prefer same directory resolution strategy)
@@ -2023,6 +2258,65 @@ export function setupOpenApi(app: Express) {
   if (usedSnapshot) {
     console.info('Serving openapi snapshot from', usedSnapshot);
   }
+
+  // Auto-tag any operations lacking tags using path heuristics to avoid the 'default' bucket
+  try {
+    const pathTagMap: Array<{ prefix: string; tag: string }> = [
+      { prefix: '/api/ai', tag: 'AI' },
+      { prefix: '/api/clients', tag: 'Clients' },
+      { prefix: '/api/client-contacts', tag: 'ClientContacts' },
+      { prefix: '/api/contact-social-profiles', tag: 'ContactSocialProfiles' },
+      { prefix: '/api/client-tags', tag: 'ClientTags' },
+      { prefix: '/api/industries', tag: 'Industries' },
+      { prefix: '/api/task-packs', tag: 'TaskPacks' },
+      { prefix: '/api/audits', tag: 'Audits' }
+    ];
+    const httpMethods = ['get','post','put','patch','delete','options','head','trace'];
+    for (const p of Object.keys(spec.paths || {})) {
+      const ops = spec.paths[p];
+      for (const m of httpMethods) {
+        const op = ops?.[m];
+        if (!op) continue;
+        const hasTags = Array.isArray(op.tags) && op.tags.length > 0 && op.tags[0] !== 'default';
+        if (!hasTags) {
+          const found = pathTagMap.find(t => p.startsWith(t.prefix));
+          op.tags = [found?.tag || 'Misc'];
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Auto-tagging OpenAPI operations failed:', e);
+  }
+
   app.get('/openapi.json', (_req, res) => res.json(spec));
-  app.use('/api/docs', swaggerServe, swaggerSetup(spec));
+  app.use('/api/docs', swaggerServe, swaggerSetup(spec, {
+    explorer: true,
+    swaggerOptions: {
+      deepLinking: true,
+      displayOperationId: false,
+      filter: true,
+      persistAuthorization: true,
+      tagsSorter: 'alpha',
+      operationsSorter: 'alpha'
+    },
+    customCss: '.swagger-ui .topbar { display: none }'
+  }));
+
+  // Lightweight Redoc UI without extra dependency
+  app.get('/api/redoc', (_req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>FlowLedger API Docs (ReDoc)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style> body { margin: 0; padding: 0; } </style>
+    <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
+  </head>
+  <body>
+    <redoc spec-url="/openapi.json"></redoc>
+  </body>
+</html>`);
+  });
 }

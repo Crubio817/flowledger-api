@@ -38,6 +38,7 @@ const router = Router();
  *                       client_id: { type: integer }
  *                       name: { type: string }
  *                       is_active: { type: boolean }
+ *                       logo_url: { type: string, nullable: true }
  *                       created_utc: { type: string, format: date-time }
  *                 meta: { $ref: '#/components/schemas/PageMeta' }
  */
@@ -51,7 +52,7 @@ router.get(
       .input('offset', sql.Int, offset)
       .input('limit', sql.Int, limit)
       .query(
-        `SELECT client_id, name, is_active, created_utc
+        `SELECT client_id, name, is_active, logo_url, created_utc
          FROM app.clients
          ORDER BY client_id
          OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`
@@ -67,7 +68,7 @@ router.get(
     if (!Number.isInteger(clientId) || clientId <= 0) return badRequest(res, 'client_id must be a positive integer');
     const pool = await getPool();
     const result = await pool.request().input('id', sql.Int, clientId).query(
-      `SELECT client_id, name, is_active, created_utc
+      `SELECT client_id, name, is_active, logo_url, created_utc
        FROM app.clients WHERE client_id = @id`
     );
   const row = result.recordset[0];
@@ -81,15 +82,16 @@ router.post(
   asyncHandler(async (req, res) => {
     const parsed = ClientCreateBody.safeParse(req.body);
     if (!parsed.success) return badRequest(res, parsed.error.issues.map(i=>i.message).join('; '));
-    const { name, is_active = true } = parsed.data;
+    const { name, is_active = true, logo_url } = parsed.data;
     const pool = await getPool();
     const result = await pool.request()
       .input('name', sql.NVarChar(200), name)
       .input('active', sql.Bit, is_active ? 1 : 0)
+      .input('logo_url', sql.NVarChar(512), logo_url || null)
       .query(`
-        INSERT INTO app.clients (name, is_active) 
-        OUTPUT INSERTED.client_id, INSERTED.name, INSERTED.is_active, INSERTED.created_utc
-        VALUES (@name, @active)
+        INSERT INTO app.clients (name, is_active, logo_url) 
+        OUTPUT INSERTED.client_id, INSERTED.name, INSERTED.is_active, INSERTED.logo_url, INSERTED.created_utc
+        VALUES (@name, @active, @logo_url)
       `);
     const created = result.recordset[0];
     await logActivity({ type: 'ClientCreated', title: `Client ${name} created`, client_id: created.client_id });
@@ -110,10 +112,11 @@ router.put(
     const request = pool.request().input('id', sql.Int, clientId);
     if (data.name !== undefined) { sets.push('name = @name'); request.input('name', sql.NVarChar(200), data.name); }
     if (data.is_active !== undefined) { sets.push('is_active = @active'); request.input('active', sql.Bit, data.is_active ? 1 : 0); }
+    if (data.logo_url !== undefined) { sets.push('logo_url = @logo_url'); request.input('logo_url', sql.NVarChar(512), data.logo_url); }
     if (!sets.length) return badRequest(res, 'No fields to update');
     const result = await request.query(`UPDATE app.clients SET ${sets.join(', ')} WHERE client_id = @id`);
     if (result.rowsAffected[0] === 0) return notFound(res);
-    const read = await pool.request().input('id', sql.Int, clientId).query(`SELECT client_id, name, is_active, created_utc FROM app.clients WHERE client_id = @id`);
+    const read = await pool.request().input('id', sql.Int, clientId).query(`SELECT client_id, name, is_active, logo_url, created_utc FROM app.clients WHERE client_id = @id`);
     const updated = read.recordset[0];
     await logActivity({ type: 'ClientUpdated', title: `Client ${clientId} updated`, client_id: clientId });
     ok(res, updated);
@@ -220,7 +223,7 @@ router.post(
       // since they might have defaults even if metadata doesn't reflect it
       if (body[key] === undefined && !p.has_default_value) {
         // For known optional parameters, don't require them
-        const optionalParams = ['PackCode', 'PrimaryContactId', 'OwnerUserId'];
+        const optionalParams = ['PackCode', 'PrimaryContactId', 'OwnerUserId', 'LogoUrl'];
         if (!optionalParams.includes(key)) {
           return badRequest(res, `Missing required field: ${key}`);
         }
@@ -274,7 +277,7 @@ router.post(
         }
 
         if (body[key] === undefined && !p.has_default_value) {
-          const optionalParams = ['PackCode', 'PrimaryContactId', 'OwnerUserId'];
+          const optionalParams = ['PackCode', 'PrimaryContactId', 'OwnerUserId', 'LogoUrl'];
           if (!optionalParams.includes(key)) {
             // don't throw here; let missing required params surface on execution if proc enforces them
           }
@@ -585,6 +588,7 @@ router.post(
  *                   type: object
  *                   properties:
  *                     name: { type: string }
+ *                     logo_url: { type: string }
  *                     contact: 
  *                       type: object
  *                       properties:
@@ -620,16 +624,29 @@ router.post(
 
     try {
       // Fetch the HTML content from the URL
-      const response = await fetch(url);
+      // Fetch with a browser-like User-Agent and a timeout
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 15000);
+      const response = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        signal: ac.signal
+      });
+      clearTimeout(t);
       if (!response.ok) throw new Error(`Failed to fetch URL: ${response.status}`);
       const html = await response.text();
 
       // Prepare the prompt for OpenAI
       const prompt = `
-Extract the following information from this LinkedIn company page HTML. Return only a JSON object with the specified fields. If a field is not found, use null.
+Extract the following information from this company page HTML. Return ONLY a JSON object with the specified fields. Do NOT include markdown, backticks, or any prose before/after the JSON. If a field is not found, use null.
 
 Fields to extract:
 - name: Company name
+- logo_url: Company logo image URL
 - contact: Object with first_name, last_name, email, phone, title (primary contact if available)
 - location: Object with city, state_province, country, postal_code
 - industry: Industry/sector
@@ -647,7 +664,7 @@ ${html.substring(0, 10000)} // Limit to first 10k chars to avoid token limits
       ];
 
       const aiResult = await chatOnce({ messages });
-      const extracted = JSON.parse(aiResult.content);
+      const extracted = parseJsonLoose(aiResult.content);
 
       ok(res, extracted);
     } catch (error) {
@@ -655,5 +672,46 @@ ${html.substring(0, 10000)} // Limit to first 10k chars to avoid token limits
     }
   })
 );
+
+// Attempt to robustly parse AI JSON output that may include code fences or extra prose.
+function parseJsonLoose(txt: string) {
+  if (!txt || typeof txt !== 'string') throw new Error('Empty AI response');
+  // Trim and fast-path
+  const t = txt.trim();
+  try { return JSON.parse(t); } catch { /* continue */ }
+
+  // Remove code fences like ```json ... ``` or ``` ... ``` if present
+  const fenceMatch = t.match(/```[a-zA-Z]*\n([\s\S]*?)\n```/);
+  if (fenceMatch && fenceMatch[1]) {
+    const inner = fenceMatch[1].trim();
+    try { return JSON.parse(inner); } catch { /* continue */ }
+  }
+
+  // Try to locate the first balanced JSON object via brace scanning
+  const firstBrace = t.indexOf('{');
+  const lastBrace = t.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const slice = t.slice(firstBrace, lastBrace + 1);
+    // Ensure balanced braces
+    let depth = 0; let endIdx = -1;
+    for (let i = 0; i < slice.length; i++) {
+      const ch = slice[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') { depth--; if (depth === 0) { endIdx = i; break; } }
+    }
+    if (endIdx !== -1) {
+      const candidate = slice.slice(0, endIdx + 1);
+      try { return JSON.parse(candidate); } catch { /* continue */ }
+    }
+    // Fall back to naive parse of full slice
+    try { return JSON.parse(slice); } catch { /* continue */ }
+  }
+
+  // Last resort: strip backticks/backquotes and retry
+  const cleaned = t.replace(/```/g, '').replace(/^json\s*/i, '');
+  try { return JSON.parse(cleaned); } catch { /* continue */ }
+
+  throw new Error('AI did not return valid JSON');
+}
 
 export default router;

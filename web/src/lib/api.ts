@@ -150,7 +150,14 @@ export async function createClientViaProcedure(data: {
   PackCode?: string | null;
   PrimaryContactId?: number | null;
   OwnerUserId?: number | null;
+  LogoUrl?: string | null;
 }) {
   const response = await api.post('/clients/create-proc', data);
   return response.data;
+}
+
+// Fetch client data from URL
+export async function fetchClientFromUrl(url: string) {
+  const response = await api.post('/clients/fetch-from-url', { url });
+  return response.data.data;
 }
