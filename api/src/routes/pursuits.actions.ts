@@ -23,6 +23,34 @@ async function checkChecklistComplete(orgId: number, pursuitId: number, checklis
   return total > 0 && total === complete;
 }
 
+/**
+ * @openapi
+ * /api/pursuits/{id}/stage:
+ *   post:
+ *     summary: Change pursuit stage
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [to]
+ *             properties:
+ *               to: { type: string, enum: [qual, pink, red, submit, won, lost] }
+ *     responses:
+ *       200:
+ *         description: Stage changed
+ */
 // POST /pursuits/:id/stage
 router.post('/:id/stage', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -79,6 +107,25 @@ router.post('/:id/stage', asyncHandler(async (req, res) => {
   }
 }));
 
+/**
+ * @openapi
+ * /api/pursuits/{id}/submit:
+ *   post:
+ *     summary: Submit pursuit (send proposal)
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Submitted
+ */
 // POST /pursuits/:id/submit
 router.post('/:id/submit', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -141,6 +188,25 @@ router.post('/:id/submit', asyncHandler(async (req, res) => {
   }
 }));
 
+/**
+ * @openapi
+ * /api/pursuits/{id}/won:
+ *   post:
+ *     summary: Mark pursuit as won
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Marked as won
+ */
 // POST /pursuits/:id/won
 router.post('/:id/won', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -184,6 +250,33 @@ router.post('/:id/won', asyncHandler(async (req, res) => {
   }
 }));
 
+/**
+ * @openapi
+ * /api/pursuits/{id}/lost:
+ *   post:
+ *     summary: Mark pursuit as lost
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason: { type: string }
+ *     responses:
+ *       200:
+ *         description: Marked as lost
+ */
 // POST /pursuits/:id/lost
 router.post('/:id/lost', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -221,6 +314,25 @@ router.post('/:id/lost', asyncHandler(async (req, res) => {
   }
 }));
 
+/**
+ * @openapi
+ * /api/pursuits/{id}/proposals:
+ *   post:
+ *     summary: Create new proposal version
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     responses:
+ *       201:
+ *         description: Proposal created
+ */
 // POST /pursuits/:id/proposals
 router.post('/:id/proposals', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -263,6 +375,25 @@ router.post('/:id/proposals', asyncHandler(async (req, res) => {
   }
 }));
 
+/**
+ * @openapi
+ * /api/pursuits/proposals/{id}/send:
+ *   post:
+ *     summary: Send proposal
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Sent
+ */
 // POST /proposals/:id/send
 router.post('/proposals/:id/send', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;

@@ -1,0 +1,74 @@
+site_name: FlowLedger API Documentation
+docs_dir: docs
+nav:
+  - Home: README.md
+  - Getting Started:
+      - Installation: ../api/README.md
+      - Quick Start: ../README.md
+      - Database Setup: development/database-setup.md
+  - Architecture:
+      - System Overview: architecture/overview.md
+      - Multi-tenancy: architecture/multi-tenancy.md
+      - Event Processing: architecture/events.md
+      - State Machines: architecture/state-machines.md
+      - Security Model: architecture/security.md
+  - Core Modules:
+      - Workstream (Sales): modules/workstream.md
+      - Clients: modules/clients.md
+      - People (Staffing): modules/people.md
+      - Engagements: modules/engagements.md
+      - Billing & Contracts: modules/billing.md
+      - Automation: modules/automation.md
+      - MCP (AI): modules/mcp.md
+  - Development:
+      - Development Guide: development/guide.md
+      - Coding Standards: WRITING_GUIDE.md
+      - Database Patterns: development/database-patterns.md
+      - Testing Strategy: development/testing.md
+      - New Modules: development/new-modules.md
+  - API Reference:
+      - REST API: api/overview.md
+      - Authentication: api/authentication.md
+      - Error Handling: api/errors.md
+      - WebSocket Events: api/websockets.md
+  - Frontend Integration:
+      - TypeScript SDK: frontend/README.md
+      - React Components: frontend/components.md
+      - Usage Examples: frontend/examples.md
+  - Deployment:
+      - Production Setup: deployment/production.md
+      - Monitoring: deployment/monitoring.md
+      - Scaling: deployment/scaling.md
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - autolinks
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - toc:
+      permalink: true

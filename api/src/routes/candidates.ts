@@ -6,6 +6,87 @@ import { logActivity } from '../utils/activity';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/candidates:
+ *   get:
+ *     summary: List candidates
+ *     tags: [Candidates]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: Candidates list
+ *   post:
+ *     summary: Create candidate
+ *     tags: [Candidates]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               org_id: { type: integer }
+ *               client_id: { type: integer }
+ *               contact_id: { type: integer }
+ *               title: { type: string }
+ *               status: { type: string }
+ *     responses:
+ *       201:
+ *         description: Candidate created
+ * /api/candidates/{candidate_id}:
+ *   get:
+ *     summary: Get candidate
+ *     tags: [Candidates]
+ *     parameters:
+ *       - in: path
+ *         name: candidate_id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Candidate
+ *   put:
+ *     summary: Update candidate
+ *     tags: [Candidates]
+ *     parameters:
+ *       - in: path
+ *         name: candidate_id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { type: object }
+ *     responses:
+ *       200:
+ *         description: Updated candidate
+ *   delete:
+ *     summary: Delete candidate
+ *     tags: [Candidates]
+ *     parameters:
+ *       - in: path
+ *         name: candidate_id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Delete result
+ */
+
 router.get(
   '/',
   asyncHandler(async (req, res) => {

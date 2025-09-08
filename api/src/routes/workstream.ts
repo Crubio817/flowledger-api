@@ -4,6 +4,20 @@ import { asyncHandler, ok, listOk } from '../utils/http';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/workstream/stats:
+ *   get:
+ *     summary: Workstream stats summary
+ *     tags: [Workstream]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Aggregated counts
+ */
 // GET /workstream/stats
 router.get('/stats', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -46,6 +60,26 @@ router.get('/stats', asyncHandler(async (req, res) => {
   ok(res, stats);
 }));
 
+/**
+ * @openapi
+ * /api/workstream/signals:
+ *   get:
+ *     summary: Workstream signals (paged)
+ *     tags: [Workstream]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: Paged signals
+ */
 // GET /workstream/signals
 router.get('/signals', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -98,6 +132,20 @@ router.get('/signals', asyncHandler(async (req, res) => {
   });
 }));
 
+/**
+ * @openapi
+ * /api/workstream/today:
+ *   get:
+ *     summary: Today panel (prioritized work)
+ *     tags: [Workstream]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Today panel items
+ */
 // GET /workstream/today
 router.get('/today', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -128,6 +176,26 @@ router.get('/today', asyncHandler(async (req, res) => {
   ok(res, result.recordset);
 }));
 
+/**
+ * @openapi
+ * /api/workstream/candidates:
+ *   get:
+ *     summary: Workstream candidates (paged)
+ *     tags: [Workstream]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: Paged candidates
+ */
 // GET /workstream/candidates
 router.get('/candidates', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;
@@ -179,6 +247,26 @@ router.get('/candidates', asyncHandler(async (req, res) => {
   });
 }));
 
+/**
+ * @openapi
+ * /api/workstream/pursuits:
+ *   get:
+ *     summary: Workstream pursuits (paged)
+ *     tags: [Workstream]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: Paged pursuits
+ */
 // GET /workstream/pursuits
 router.get('/pursuits', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1;

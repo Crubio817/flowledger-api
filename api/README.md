@@ -1,5 +1,7 @@
 # FlowLedger API
 
+For the full docs hub and module guides, see: ./../docs/README.md
+
 This directory contains the backend API for FlowLedger, built with Node.js and Express.
 
 ## Prerequisites
@@ -569,3 +571,310 @@ GROUP BY lr.reason_text;
 - **Checklist table**: `pursuit_checklist` for Pink/Red gate visibility
 - **Lost reason taxonomy**: Enable win/loss theme analytics
 - **Signal clustering**: Group related signals automatically
+
+---
+
+## People Module v1.0
+
+The People Module provides a comprehensive staffing and resource management system with AI-powered candidate matching, immutable rate snapshots, and real-time availability tracking. This module enables organizations to efficiently match talent to projects with explainable AI recommendations and automated rate resolution.
+
+### Key Features
+
+- **AI-Powered Matching**: FitScore algorithm with weighted scoring across hard skills, soft skills, availability, timezone, domain experience, reliability, and continuity
+- **Immutable Rate Snapshots**: Rates are resolved and "snapshotted" when assignments are created, preventing financial discrepancies
+- **Multi-tenant Architecture**: All data scoped by `org_id` with field-level access control
+- **Real-time Availability**: Daily allocation tracking with utilization monitoring and over-allocation alerts
+- **Comprehensive Billing**: Contract management, time entries, invoices, and rate override capabilities
+- **Audit Trail**: Complete event history with immutable logging for all staffing decisions
+
+### Core Concepts
+
+#### FitScore Algorithm
+A weighted scoring system that evaluates candidates based on:
+- **Hard Skills (35%)**: Level match vs requirements with recency boost
+- **Soft Skills (15%)**: Cosine similarity of skill vectors
+- **Availability (15%)**: Hours available vs required
+- **Timezone (10%)**: Working hours overlap
+- **Domain (10%)**: Client/industry experience match
+- **Reliability (10%)**: Historical performance score
+- **Continuity (5%)**: Existing engagement assignment
+
+#### Immutable Rate Snapshots
+- Rates resolved at assignment creation time
+- Full breakdown stored: base + premiums + scarcity + overrides
+- Prevents financial discrepancies and ensures auditability
+- Trigger protection prevents snapshot updates
+
+### Core Entities
+
+#### People & Skills
+- `app.person` - Staff profiles with skills and availability
+- `app.skill` - Standardized skill taxonomy
+- `app.person_skill` - Person-skill associations with proficiency levels
+- `app.skill_evidence` - Supporting evidence for skill claims
+
+#### Assignments & Allocations
+- `app.assignment` - Person-project assignments with immutable rate snapshots
+- `app.person_calendar` - Daily working hours and holidays
+- `app.person_daily_allocation` - Daily utilization tracking
+- `app.v_person_availability` - Real-time availability view
+
+#### Rate Resolution
+- `app.rate_card` - Precedence-based rate resolution rules
+- `app.rate_premium` - Skill and role-based premiums
+- `app.contract` - Contract/SOW management
+- `app.contract_rate_override` - Contract-specific rate overrides
+
+#### Billing & Invoicing
+- `app.time_entry` - Time tracking for invoicing
+- `app.invoice` - Draft and sent invoices
+- `app.invoice_line` - Invoice line items
+
+### Database Schema
+
+#### Core Tables
+- `app.person` - Staff profiles and basic information
+- `app.skill` - Standardized skill definitions
+- `app.assignment` - Person-project assignments
+- `app.person_skill` - Skill proficiency associations
+- `app.skill_evidence` - Supporting evidence for skills
+
+#### Supporting Tables
+- `app.person_calendar` - Working hours and holidays
+- `app.person_daily_allocation` - Daily utilization tracking
+- `app.rate_card` - Rate resolution rules
+- `app.rate_premium` - Premium calculations
+- `app.contract` - Contract management
+- `app.contract_budget` - Budget caps and alerts
+- `app.contract_rate_override` - Contract-specific overrides
+- `app.time_entry` - Time tracking entries
+- `app.invoice` - Invoice management
+- `app.invoice_line` - Invoice details
+- `app.audit_log` - Comprehensive audit trail
+
+#### Views
+- `app.v_person_availability` - Real-time availability with utilization
+
+### API Endpoints
+
+#### Staffing Requests
+```
+GET    /api/staffing-requests/:id/rank     - Rank candidates with FitScore
+POST   /api/assignments                    - Create assignment with rate snapshot
+```
+
+#### People Directory
+```
+GET    /api/people                         - Search/filter people by skills/availability
+GET    /api/people/:id                     - Get person details with skills
+```
+
+#### Rate Preview
+```
+GET    /api/rates/preview                  - Resolve effective rate with breakdown
+```
+
+#### Assignments
+```
+GET    /api/assignments                    - List assignments with filters
+GET    /api/assignments/:id                - Get assignment details
+PUT    /api/assignments/:id                - Update assignment (limited fields)
+DELETE /api/assignments/:id                - Delete assignment
+```
+
+### Rate Resolution Precedence
+
+Rates are resolved using a hierarchical precedence system:
+
+1. **Contract Override**: Most specific, applies to this contract only
+2. **Engagement Rate**: Applies to all assignments on this engagement
+3. **Role Template**: Applies to all assignments with this role template
+4. **Person Rate**: Applies to all assignments for this person
+5. **Org Default**: Fallback rate for the organization
+
+Each level can include:
+- Base rate by level (L1, L2, L3, L4, L5)
+- Absolute premiums ($ amounts)
+- Percentage premiums (% of base)
+- Scarcity multipliers (market demand adjustments)
+
+### Background Workers
+
+#### Rate Scarcity Calculator (`src/workers/rateScarcity.ts`)
+Updates scarcity multipliers based on market demand:
+- Analyzes assignment patterns and skill utilization
+- Calculates scarcity scores for high-demand skills
+- Updates `app.scarcity_multiplier` table
+
+#### Availability Monitor (`src/workers/availability.ts`)
+Monitors utilization and sends alerts:
+- Tracks daily allocations vs capacity
+- Identifies over-allocated resources
+- Sends proactive alerts for staffing conflicts
+
+### Analytics Views
+
+Pre-built views for reporting and dashboards:
+
+#### Utilization Analysis
+```sql
+SELECT * FROM app.v_person_utilization;
+-- Returns: person_id, week_start, total_hours, available_hours, utilization_pct
+```
+
+#### Skill Demand Analysis
+```sql
+SELECT * FROM app.v_skill_demand;
+-- Returns: skill_id, assignments_count, avg_fit_score, scarcity_multiplier
+```
+
+#### Rate Resolution Audit
+```sql
+SELECT * FROM app.v_rate_resolution_audit;
+-- Returns: assignment_id, final_rate, breakdown_json, resolved_at
+```
+
+### Multi-tenancy
+
+All queries include `org_id` filtering for data isolation:
+- Database-level row security via `org_id` columns
+- API-level validation of organization context
+- Shared skill taxonomy with org-specific customizations
+
+### Event Sourcing
+
+All staffing decisions are recorded in `audit_log` table:
+- Complete audit trail of rate resolutions
+- Assignment creation and modification tracking
+- Evidence chain for skill validations
+- Financial decision traceability
+
+### Development Setup
+
+1. **Database Setup**: Run the People module migrations:
+   ```bash
+   node scripts/run-people-migrations.js
+   ```
+
+2. **Environment Variables**: Ensure database connection is configured in `.env`
+
+3. **Start Workers**: For development testing:
+   ```bash
+   node src/workers/rateScarcity.ts
+   node src/workers/availability.ts
+   ```
+
+### API Usage Examples
+
+#### Rank Candidates for Staffing Request
+```bash
+curl -X GET "http://localhost:4001/api/staffing-requests/123/rank?org_id=1&include_rate_preview=true" \
+  -H "Authorization: Bearer <token>"
+```
+
+#### Create Assignment with Rate Snapshot
+```bash
+curl -X POST http://localhost:4001/api/assignments \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "org_id": 1,
+    "person_id": 123,
+    "engagement_id": 456,
+    "role_template_id": 789,
+    "start_date": "2025-10-01",
+    "end_date": "2025-12-31",
+    "alloc_pct": 100
+  }'
+```
+
+#### Get Rate Preview
+```bash
+curl -X GET "http://localhost:4001/api/rates/preview?org_id=1&role_template_id=789&level=L3&skills=1,2,3&engagement_id=456" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Security Considerations
+
+- All endpoints require proper authentication (JWT middleware)
+- Database queries use parameterized statements to prevent SQL injection
+- Multi-tenant data isolation enforced at query level
+- Rate snapshots prevent unauthorized financial modifications
+- Audit logging captures all actor information
+
+### Observability (Minimum Viable Signals)
+
+#### Rate Resolution Performance
+```sql
+SELECT AVG(DATEDIFF(millisecond, created_at, resolved_at)) as avg_resolution_ms
+FROM app.rate_resolution_log
+WHERE created_at >= DATEADD(hour, -1, SYSUTCDATETIME());
+```
+*Target: < 50ms*
+
+#### Assignment Success Rate
+```sql
+SELECT
+  COUNT(CASE WHEN end_date IS NOT NULL THEN 1 END) * 100.0 / COUNT(*) as completion_rate
+FROM app.assignment
+WHERE start_date >= DATEADD(month, -3, SYSUTCDATETIME());
+```
+*Target: > 85%*
+
+#### Over-allocation Alerts
+```sql
+SELECT COUNT(*) as over_allocated_people
+FROM app.person_daily_allocation
+WHERE is_overallocated = 1
+AND allocation_date >= CAST(SYSUTCDATETIME() AS DATE);
+```
+*Target: < 5% of active assignments*
+
+### Quick Integrity Queries
+
+```sql
+-- 1) Rate snapshot immutability check
+SELECT COUNT(*) violations
+FROM app.assignment
+WHERE bill_rate_snapshot <> cost_rate_snapshot; -- Should be 0
+
+-- 2) Assignment date validation
+SELECT COUNT(*) invalid_assignments
+FROM app.assignment
+WHERE start_date > end_date OR end_date < GETDATE(); -- Should be 0
+
+-- 3) Skill evidence completeness
+SELECT
+  ps.person_id,
+  ps.skill_id,
+  COUNT(se.evidence_id) as evidence_count
+FROM app.person_skill ps
+LEFT JOIN app.skill_evidence se ON ps.person_id = se.person_id AND ps.skill_id = se.skill_id
+GROUP BY ps.person_id, ps.skill_id
+HAVING COUNT(se.evidence_id) = 0; -- Should be minimal
+
+-- 4) Rate resolution coverage
+SELECT COUNT(*) unassigned_rates
+FROM app.assignment
+WHERE bill_rate_snapshot IS NULL OR cost_rate_snapshot IS NULL; -- Should be 0
+
+-- 5) Availability conflicts
+SELECT COUNT(*) conflicts
+FROM app.person_daily_allocation
+WHERE total_hours_allocated > total_hours_available; -- Should be monitored
+```
+
+### Performance Targets
+
+- **Candidate Ranking**: <300ms for 5k people
+- **Rate Resolution**: <50ms per call
+- **Availability Check**: <100ms per person
+- **Assignment Creation**: <200ms with snapshot
+- **Real-time Updates**: <5 seconds latency
+
+---
+
+**Version**: v1.0 (People Module Complete)  
+**Last Updated**: September 8, 2025  
+**Database**: Azure SQL Server  
+**Architecture**: Multi-tenant with event sourcing

@@ -26,7 +26,7 @@ function readPackageVersion(): string {
   }
 }
 
-const options: Options = {
+export const options: Options = {
   apis: apiGlobs,
   definition: {
     openapi: '3.0.3',
@@ -2218,6 +2218,10 @@ const options: Options = {
   }
 };
 
+export function buildOpenApiOptions(): Options {
+  return options;
+}
+
 export function setupOpenApi(app: Express) {
   // If a generated snapshot exists (openapi.snapshot.json) prefer serving it so manual
   // edits are visible in Swagger UI (useful for local testing and CI snapshots).
@@ -2306,6 +2310,8 @@ export function setupOpenApi(app: Express) {
     const pathTagMap: Array<{ prefix: string; tag: string }> = [
       { prefix: '/api/ai', tag: 'AI' },
       { prefix: '/api/auto', tag: 'Auto' },
+      { prefix: '/api/billing', tag: 'Billing' },
+      { prefix: '/api/engagements', tag: 'Engagements' },
       { prefix: '/api/audits', tag: 'Audits' },
       { prefix: '/api/audit-sipoc', tag: 'SIPOC' },
       { prefix: '/api/audit-step-progress', tag: 'Audit Step Progress' },
@@ -2331,6 +2337,12 @@ export function setupOpenApi(app: Express) {
       { prefix: '/api/dashboard-stats', tag: 'Views' },
       { prefix: '/api/audit-recent-touch', tag: 'Views' },
       { prefix: '/api/clients-overview', tag: 'Views' },
+      { prefix: '/api/comms', tag: 'Comms' },
+      { prefix: '/api/principals', tag: 'Principals' },
+      { prefix: '/api/signals', tag: 'Signals' },
+      { prefix: '/api/candidates', tag: 'Candidates' },
+      { prefix: '/api/pursuits', tag: 'Pursuits' },
+      { prefix: '/api/workstream', tag: 'Workstream' },
     ];
     const httpMethods = ['get','post','put','patch','delete','options','head','trace'];
     for (const p of Object.keys(spec.paths || {})) {

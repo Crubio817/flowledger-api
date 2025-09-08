@@ -1,5 +1,7 @@
 # Frontend Integration Package
 
+Related docs hub: ./../docs/frontend/README.md
+
 This package contains all the essential files needed for your front end developer to integrate with the FlowLedger API.
 
 ## 📁 Files Included
@@ -78,15 +80,22 @@ This package contains all the essential files needed for your front end develope
 - `/api/task-packs` - Task pack management
 - `/api/ai/*` - AI-powered features
 
-### Identity & Comms Hub Endpoints ✨ NEW
-- `/api/principals` - Principal management (users, services, teams)
-- `/api/principals/{id}` - Individual principal operations
-- `/api/comms/threads` - Communication threads management
-- `/api/comms/threads/{id}` - Thread details and updates
-- `/api/comms/threads/{id}/reply` - Reply to communication threads
-- `/api/comms/threads/{id}/link` - Link threads to work items
-- `/api/comms/attachments/{id}/save-as-doc` - Save attachments as documents
-- `/webhooks/graph` - Microsoft Graph email notifications
+### Billing & Contracts Endpoints ✨ NEW
+- `/api/billing/contracts` - Contract management (T&M, Fixed Price, Milestone, Retainer, Prepaid)
+- `/api/billing/time-entries` - Time tracking with approval workflow
+- `/api/billing/invoices` - Invoice generation and management
+- `/api/billing/payments` - Payment recording with multi-currency support
+- `/api/billing/contracts/{id}/milestones` - Contract milestone management
+
+### Billing & Contracts Enhancements ✨ NEW
+- **Multi-Currency Support**: Automatic exchange rate handling
+- **Revenue Recognition**: Advanced revenue recognition engine
+- **Time Tracking**: Professional time entry with approval workflows
+- **Invoice Automation**: Generate invoices from approved time entries
+- **Payment Processing**: Multi-method payment recording
+- **Collections Management**: Outstanding balance tracking and reminders
+
+📖 **Detailed Implementation Guide**: See `BILLING_MODULE_GUIDE.md` for complete frontend implementation details.
 
 ### Response Format
 All successful responses follow this pattern:
@@ -344,7 +353,7 @@ npm run dev  # Will run on http://localhost:5173
 ```
 
 ### API Documentation
-- **Swagger UI**: `http://localhost:4001/api-docs`
+- **Swagger UI**: `http://localhost:4001/api/docs`
 - **OpenAPI JSON**: `http://localhost:4001/openapi.json`
 
 ## 📝 Notes
@@ -358,6 +367,6 @@ npm run dev  # Will run on http://localhost:5173
 ## 🆘 Support
 
 If you need help integrating:
-1. Check the API documentation at `http://localhost:4001/api-docs`
+1. Check the API documentation at `http://localhost:4001/api/docs`
 2. Test endpoints with the health check: `http://localhost:4001/api/health`
 3. Use the provided `api.ts` functions as reference implementations

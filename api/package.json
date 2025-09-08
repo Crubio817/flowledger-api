@@ -16,7 +16,8 @@
   "db:migrate:core-modules": "node scripts/run-core-modules-migration.cjs",
   "db:migrate:fix-int-client": "node scripts/fix-module-instance-client.cjs",
     "db:schema": "ts-node scripts/schema-introspect.ts",
-    "gen:api:snapshot": "node fetch-openapi.js"
+    "gen:api:snapshot": "node fetch-openapi.js",
+    "gen:api:snapshot:local": "node scripts/generate-openapi-snapshot.cjs"
   },
   "dependencies": {
     "@azure/identity": "^4.11.1",
@@ -24,6 +25,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.5.12",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
@@ -38,6 +40,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^12.0.0",
+    "ws": "^8.18.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

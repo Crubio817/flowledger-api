@@ -6,6 +6,25 @@ import { assertTx, CANDIDATE_TX } from '../state/guards';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/candidates/{id}/promote:
+ *   post:
+ *     summary: Promote candidate to pursuit
+ *     tags: [Candidates]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: org_id
+ *         required: false
+ *         schema: { type: integer }
+ *     responses:
+ *       201:
+ *         description: Pursuit created or returned (idempotent)
+ */
 // POST /candidates/:id/promote
 router.post('/:id/promote', asyncHandler(async (req, res) => {
   const orgId = Number(req.query.org_id) || 1; // Default to 1 if not provided

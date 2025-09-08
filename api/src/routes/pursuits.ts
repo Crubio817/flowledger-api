@@ -6,6 +6,86 @@ import { logActivity } from '../utils/activity';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/pursuits:
+ *   get:
+ *     summary: List pursuits
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: query
+ *         name: org_id
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: stage
+ *         schema: { type: string, enum: [qual, pink, red, submit, won, lost] }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: Pursuits list
+ *   post:
+ *     summary: Create pursuit
+ *     tags: [Pursuits]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [org_id, candidate_id, pursuit_stage]
+ *             properties:
+ *               org_id: { type: integer }
+ *               candidate_id: { type: integer }
+ *               pursuit_stage: { type: string }
+ *     responses:
+ *       201:
+ *         description: Pursuit created
+ * /api/pursuits/{pursuit_id}:
+ *   get:
+ *     summary: Get pursuit
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: pursuit_id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Pursuit
+ *   put:
+ *     summary: Update pursuit
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: pursuit_id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { type: object }
+ *     responses:
+ *       200:
+ *         description: Updated pursuit
+ *   delete:
+ *     summary: Delete pursuit
+ *     tags: [Pursuits]
+ *     parameters:
+ *       - in: path
+ *         name: pursuit_id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Delete result
+ */
+
 router.get(
   '/',
   asyncHandler(async (req, res) => {

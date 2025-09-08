@@ -301,4 +301,461 @@ router.post('/attachments/:id/save-as-doc', asyncHandler(async (req, res) => {
   ok(res, { doc_id: docId });
 }));
 
+// ============================================================================
+// NEW ENHANCEMENT ENDPOINTS
+// ============================================================================
+
+// WebSocket Connection Management
+// POST /api/comms/ws/connect - Register WebSocket connection
+router.post('/ws/connect', asyncHandler(async (req, res) => {
+  const { socket_id, principal_id, user_agent, ip_address } = req.body;
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+
+  if (!orgId || !socket_id || !principal_id) {
+    return badRequest(res, 'org_id, socket_id, and principal_id required');
+  }
+
+  const pool = await getPool();
+
+  // Insert or update connection
+  await pool.request()
+    .input('socketId', socket_id)
+    .input('orgId', sql.Int, orgId)
+    .input('principalId', sql.BigInt, principal_id)
+    .input('userAgent', user_agent)
+    .input('ipAddress', ip_address)
+    .query(`
+      MERGE app.comms_websocket_connection AS target
+      USING (SELECT @socketId as socket_id) AS source
+      ON target.socket_id = source.socket_id
+      WHEN MATCHED THEN
+        UPDATE SET last_ping_at = SYSDATETIME(), is_active = 1
+      WHEN NOT MATCHED THEN
+        INSERT (org_id, principal_id, socket_id, user_agent, ip_address)
+        VALUES (@orgId, @principalId, @socketId, @userAgent, @ipAddress);
+    `);
+
+  ok(res, { connected: true });
+}));
+
+// POST /api/comms/ws/disconnect - Unregister WebSocket connection
+router.post('/ws/disconnect', asyncHandler(async (req, res) => {
+  const { socket_id } = req.body;
+
+  if (!socket_id) return badRequest(res, 'socket_id required');
+
+  const pool = await getPool();
+
+  await pool.request()
+    .input('socketId', socket_id)
+    .query(`
+      UPDATE app.comms_websocket_connection
+      SET is_active = 0, last_ping_at = SYSDATETIME()
+      WHERE socket_id = @socketId
+    `);
+
+  ok(res, { disconnected: true });
+}));
+
+// POST /api/comms/ws/subscribe - Subscribe to real-time updates
+router.post('/ws/subscribe', asyncHandler(async (req, res) => {
+  const { socket_id, subscription_type, resource_id } = req.body;
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+
+  if (!orgId || !socket_id || !subscription_type) {
+    return badRequest(res, 'org_id, socket_id, and subscription_type required');
+  }
+
+  const pool = await getPool();
+
+  // Get connection_id
+  const connResult = await pool.request()
+    .input('socketId', socket_id)
+    .query('SELECT connection_id FROM app.comms_websocket_connection WHERE socket_id = @socketId AND is_active = 1');
+
+  if (connResult.recordset.length === 0) {
+    return badRequest(res, 'Invalid or inactive socket connection');
+  }
+
+  const connectionId = connResult.recordset[0].connection_id;
+
+  // Insert subscription
+  await pool.request()
+    .input('connectionId', sql.BigInt, connectionId)
+    .input('subscriptionType', subscription_type)
+    .input('resourceId', resource_id ? sql.BigInt : sql.BigInt, resource_id || null)
+    .query(`
+      INSERT INTO app.comms_websocket_subscription (connection_id, subscription_type, resource_id)
+      VALUES (@connectionId, @subscriptionType, @resourceId)
+    `);
+
+  ok(res, { subscribed: true });
+}));
+
+// POST /api/comms/ws/unsubscribe - Unsubscribe from real-time updates
+router.post('/ws/unsubscribe', asyncHandler(async (req, res) => {
+  const { socket_id, subscription_type, resource_id } = req.body;
+
+  if (!socket_id || !subscription_type) {
+    return badRequest(res, 'socket_id and subscription_type required');
+  }
+
+  const pool = await getPool();
+
+  // Get connection_id
+  const connResult = await pool.request()
+    .input('socketId', socket_id)
+    .query('SELECT connection_id FROM app.comms_websocket_connection WHERE socket_id = @socketId');
+
+  if (connResult.recordset.length === 0) return badRequest(res, 'Invalid socket connection');
+
+  const connectionId = connResult.recordset[0].connection_id;
+
+  // Delete subscription
+  const request = pool.request()
+    .input('connectionId', sql.BigInt, connectionId)
+    .input('subscriptionType', subscription_type);
+
+  let query = 'DELETE FROM app.comms_websocket_subscription WHERE connection_id = @connectionId AND subscription_type = @subscriptionType';
+
+  if (resource_id) {
+    query += ' AND resource_id = @resourceId';
+    request.input('resourceId', sql.BigInt, resource_id);
+  }
+
+  await request.query(query);
+
+  ok(res, { unsubscribed: true });
+}));
+
+// Email Templates
+// GET /api/comms/templates - List email templates
+router.get('/templates', asyncHandler(async (req, res) => {
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+  const { type, is_active } = req.query;
+
+  if (!orgId) return badRequest(res, 'org_id required');
+
+  const pool = await getPool();
+  const request = pool.request().input('orgId', sql.Int, orgId);
+
+  let query = 'SELECT * FROM app.comms_email_template WHERE org_id = @orgId';
+
+  if (type) {
+    query += ' AND template_type = @type';
+    request.input('type', type);
+  }
+
+  if (is_active !== undefined) {
+    query += ' AND is_active = @isActive';
+    request.input('isActive', sql.Bit, is_active === 'true' ? 1 : 0);
+  }
+
+  query += ' ORDER BY name';
+
+  const result = await request.query(query);
+  const { page, limit } = (await import('../utils/http')).getPagination(req);
+  listOk(res, result.recordset, { page, limit });
+}));
+
+// POST /api/comms/templates - Create email template
+router.post('/templates', asyncHandler(async (req, res) => {
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+  const { name, subject_template, body_template, template_type, variables } = req.body;
+  const principalId = req.query.principal_id ? Number(req.query.principal_id) : null;
+
+  if (!orgId || !name || !subject_template || !body_template) {
+    return badRequest(res, 'org_id, name, subject_template, and body_template required');
+  }
+
+  const pool = await getPool();
+
+  // Insert template
+  const templateResult = await pool.request()
+    .input('orgId', sql.Int, orgId)
+    .input('name', name)
+    .input('subjectTemplate', subject_template)
+    .input('bodyTemplate', body_template)
+    .input('templateType', template_type || 'general')
+    .input('createdBy', sql.BigInt, principalId)
+    .query(`
+      INSERT INTO app.comms_email_template (org_id, name, subject_template, body_template, template_type, created_by)
+      OUTPUT INSERTED.template_id
+      VALUES (@orgId, @name, @subjectTemplate, @bodyTemplate, @templateType, @createdBy)
+    `);
+
+  const templateId = templateResult.recordset[0].template_id;
+
+  // Insert variables if provided
+  if (variables && Array.isArray(variables)) {
+    for (const variable of variables) {
+      await pool.request()
+        .input('templateId', sql.BigInt, templateId)
+        .input('varName', variable.name)
+        .input('varType', variable.type || 'text')
+        .input('defaultValue', variable.default_value)
+        .input('description', variable.description)
+        .input('isRequired', sql.Bit, variable.is_required ? 1 : 0)
+        .query(`
+          INSERT INTO app.comms_template_variable (template_id, variable_name, variable_type, default_value, description, is_required)
+          VALUES (@templateId, @varName, @varType, @defaultValue, @description, @isRequired)
+        `);
+    }
+  }
+
+  ok(res, { template_id: templateId }, 201);
+}));
+
+// GET /api/comms/templates/:id - Get template with variables
+router.get('/templates/:id', asyncHandler(async (req, res) => {
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+  const { id } = req.params;
+
+  if (!orgId) return badRequest(res, 'org_id required');
+
+  const pool = await getPool();
+
+  // Get template
+  const templateResult = await pool.request()
+    .input('id', sql.BigInt, parseInt(id))
+    .input('orgId', sql.Int, orgId)
+    .query('SELECT * FROM app.comms_email_template WHERE template_id = @id AND org_id = @orgId');
+
+  if (templateResult.recordset.length === 0) return notFound(res);
+
+  // Get variables
+  const variablesResult = await pool.request()
+    .input('templateId', sql.BigInt, parseInt(id))
+    .query('SELECT * FROM app.comms_template_variable WHERE template_id = @templateId ORDER BY variable_name');
+
+  ok(res, {
+    ...templateResult.recordset[0],
+    variables: variablesResult.recordset
+  });
+}));
+
+// Advanced Search
+// GET /api/comms/search - Advanced search across threads and messages
+router.get('/search', asyncHandler(async (req, res) => {
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+  const { q, type, mailbox_id, status, from_date, to_date } = req.query;
+  const { page, limit, offset } = (await import('../utils/http')).getPagination(req);
+  const principalId = req.query.principal_id ? Number(req.query.principal_id) : null;
+
+  if (!orgId) return badRequest(res, 'org_id required');
+  if (!q || typeof q !== 'string' || q.length < 3) return badRequest(res, 'Search query must be at least 3 characters');
+
+  const pool = await getPool();
+  const request = pool.request()
+    .input('orgId', sql.Int, orgId)
+    .input('query', q)
+    .input('offset', sql.Int, offset)
+    .input('limit', sql.Int, limit);
+
+  let whereClause = 't.org_id = @orgId';
+  let joinClause = '';
+
+  // Add filters
+  if (mailbox_id) {
+    whereClause += ' AND t.mailbox_id = @mailboxId';
+    request.input('mailboxId', sql.Int, mailbox_id);
+  }
+
+  if (status) {
+    whereClause += ' AND t.status = @status';
+    request.input('status', status);
+  }
+
+  if (from_date) {
+    whereClause += ' AND t.last_msg_at >= @fromDate';
+    request.input('fromDate', from_date);
+  }
+
+  if (to_date) {
+    whereClause += ' AND t.last_msg_at <= @toDate';
+    request.input('toDate', to_date);
+  }
+
+  let query = '';
+
+  if (type === 'messages' || !type) {
+    // Search in messages
+    query = `
+      SELECT
+        'message' as result_type,
+        m.message_id as id,
+        t.thread_id,
+        t.subject as thread_subject,
+        LEFT(m.snippet, 200) as snippet,
+        m.sent_at as date,
+        m.from_addr as sender,
+        ROW_NUMBER() OVER (ORDER BY m.sent_at DESC) as row_num
+      FROM app.comms_message m
+      JOIN app.comms_thread t ON m.thread_id = t.thread_id
+      WHERE ${whereClause}
+      AND CONTAINS((m.snippet, m.from_addr), @query)
+    `;
+  }
+
+  if (type === 'threads' || !type) {
+    // Search in threads
+    if (query.includes('UNION')) query += ' UNION ';
+    query += `
+      SELECT
+        'thread' as result_type,
+        t.thread_id as id,
+        t.thread_id,
+        t.subject as thread_subject,
+        LEFT(t.subject, 200) as snippet,
+        t.last_msg_at as date,
+        p.display_name as sender,
+        ROW_NUMBER() OVER (ORDER BY t.last_msg_at DESC) as row_num
+      FROM app.comms_thread t
+      LEFT JOIN app.principal p ON t.assigned_principal_id = p.principal_id
+      WHERE ${whereClause}
+      AND CONTAINS(t.subject, @query)
+    `;
+  }
+
+  query += `
+    ORDER BY date DESC
+    OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+  `;
+
+  const result = await request.query(query);
+
+  // Log search for analytics
+  if (principalId) {
+    await pool.request()
+      .input('orgId', sql.Int, orgId)
+      .input('principalId', sql.BigInt, principalId)
+      .input('query', q)
+      .input('searchType', type || 'general')
+      .input('resultCount', sql.Int, result.recordset.length)
+      .query(`
+        INSERT INTO app.comms_search_history (org_id, principal_id, search_query, search_type, result_count)
+        VALUES (@orgId, @principalId, @query, @searchType, @resultCount)
+      `);
+  }
+
+  listOk(res, result.recordset, { page, limit });
+}));
+
+// File Upload Management
+// POST /api/comms/upload/init - Initialize resumable upload
+router.post('/upload/init', asyncHandler(async (req, res) => {
+  const orgId = req.query.org_id ? Number(req.query.org_id) : null;
+  const { filename, mime_type, total_size_bytes, thread_id } = req.body;
+  const principalId = req.query.principal_id ? Number(req.query.principal_id) : null;
+
+  if (!orgId || !filename || !total_size_bytes) {
+    return badRequest(res, 'org_id, filename, and total_size_bytes required');
+  }
+
+  const sessionId = require('crypto').randomUUID();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  const pool = await getPool();
+
+  await pool.request()
+    .input('sessionId', sessionId)
+    .input('orgId', sql.Int, orgId)
+    .input('principalId', sql.BigInt, principalId)
+    .input('threadId', thread_id ? sql.BigInt : sql.BigInt, thread_id || null)
+    .input('filename', filename)
+    .input('mimeType', mime_type)
+    .input('totalSize', sql.BigInt, total_size_bytes)
+    .input('expiresAt', expiresAt)
+    .query(`
+      INSERT INTO app.comms_upload_session (session_id, org_id, principal_id, thread_id, filename, mime_type, total_size_bytes, expires_at)
+      VALUES (@sessionId, @orgId, @principalId, @threadId, @filename, @mimeType, @totalSize, @expiresAt)
+    `);
+
+  ok(res, {
+    session_id: sessionId,
+    expires_at: expiresAt.toISOString(),
+    chunk_size: 1024 * 1024 // 1MB chunks
+  }, 201);
+}));
+
+// POST /api/comms/upload/:session_id/chunk - Upload file chunk
+router.post('/upload/:session_id/chunk', asyncHandler(async (req, res) => {
+  const { session_id } = req.params;
+  const { chunk_index, chunk_data } = req.body; // chunk_data should be base64 encoded
+
+  if (!chunk_data) return badRequest(res, 'chunk_data required');
+
+  const pool = await getPool();
+
+  // Get session
+  const sessionResult = await pool.request()
+    .input('sessionId', session_id)
+    .query(`
+      SELECT * FROM app.comms_upload_session
+      WHERE session_id = @sessionId AND status = 'uploading' AND expires_at > SYSDATETIME()
+    `);
+
+  if (sessionResult.recordset.length === 0) {
+    return badRequest(res, 'Invalid or expired upload session');
+  }
+
+  const session = sessionResult.recordset[0];
+  const chunkSize = Buffer.from(chunk_data, 'base64').length;
+  const newUploadedBytes = session.uploaded_bytes + chunkSize;
+
+  // Update progress
+  await pool.request()
+    .input('sessionId', session_id)
+    .input('uploadedBytes', sql.BigInt, newUploadedBytes)
+    .query(`
+      UPDATE app.comms_upload_session
+      SET uploaded_bytes = @uploadedBytes, updated_at = SYSDATETIME()
+      WHERE session_id = @sessionId
+    `);
+
+  // Check if upload is complete
+  if (newUploadedBytes >= session.total_size_bytes) {
+    await pool.request()
+      .input('sessionId', session_id)
+      .query(`
+        UPDATE app.comms_upload_session
+        SET status = 'completed', updated_at = SYSDATETIME()
+        WHERE session_id = @sessionId
+      `);
+
+    // Here you would typically save the complete file to blob storage
+    // For now, we'll just mark it as completed
+  }
+
+  ok(res, {
+    uploaded_bytes: newUploadedBytes,
+    total_bytes: session.total_size_bytes,
+    complete: newUploadedBytes >= session.total_size_bytes
+  });
+}));
+
+// GET /api/comms/upload/:session_id/status - Get upload status
+router.get('/upload/:session_id/status', asyncHandler(async (req, res) => {
+  const { session_id } = req.params;
+
+  const pool = await getPool();
+
+  const result = await pool.request()
+    .input('sessionId', session_id)
+    .query('SELECT * FROM app.comms_upload_session WHERE session_id = @sessionId');
+
+  if (result.recordset.length === 0) return notFound(res);
+
+  const session = result.recordset[0];
+
+  ok(res, {
+    session_id: session.session_id,
+    filename: session.filename,
+    uploaded_bytes: session.uploaded_bytes,
+    total_bytes: session.total_size_bytes,
+    status: session.status,
+    expires_at: session.expires_at
+  });
+}));
+
 export default router;

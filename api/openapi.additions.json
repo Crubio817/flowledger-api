@@ -1,0 +1,116 @@
+{
+  "paths": {
+    "/api/staffing-requests/{id}/rank": {
+      "post": {
+        "tags": ["People"],
+        "summary": "Rank candidates for a staffing request",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } },
+          { "in": "query", "name": "org_id", "required": true, "schema": { "type": "integer" } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 20 } },
+          { "in": "query", "name": "include_rate_preview", "schema": { "type": "boolean" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ranked candidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "enum": ["ok"] },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "person_id": { "type": "integer" },
+                          "fit_score": { "type": "number" },
+                          "reasons": { "type": "array", "items": { "type": "object" } },
+                          "modeled_rate": { "$ref": "#/components/schemas/RateBreakdown" }
+                        }
+                      }
+                    },
+                    "meta": { "$ref": "#/components/schemas/PageMeta" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assignments": {
+      "post": {
+        "tags": ["People"],
+        "summary": "Create assignment with rate snapshot",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object" } } }
+        },
+        "responses": { "201": { "description": "Assignment created" } }
+      }
+    },
+    "/api/assignments/{id}": {
+      "patch": {
+        "tags": ["People"],
+        "summary": "Update assignment (non-snapshot fields)",
+        "parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object" } } } },
+        "responses": { "200": { "description": "Assignment updated" } }
+      },
+      "delete": {
+        "tags": ["People"],
+        "summary": "Delete assignment",
+        "parameters": [ { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } } ],
+        "responses": { "200": { "description": "Assignment deleted" } }
+      }
+    },
+    "/api/rates/preview": {
+      "get": {
+        "tags": ["People"],
+        "summary": "Resolve effective rate with breakdown",
+        "parameters": [
+          { "in": "query", "name": "org_id", "required": true, "schema": { "type": "integer" } },
+          { "in": "query", "name": "role_template_id", "schema": { "type": "integer" } },
+          { "in": "query", "name": "level", "schema": { "type": "string" } },
+          { "in": "query", "name": "skills", "schema": { "type": "string", "description": "Comma-separated skill IDs" } },
+          { "in": "query", "name": "engagement_id", "schema": { "type": "integer" } },
+          { "in": "query", "name": "as_of", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rate preview",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RateBreakdown" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RateBreakdown": {
+        "type": "object",
+        "properties": {
+          "base_currency": { "type": "string" },
+          "base_amount": { "type": "number" },
+          "premiums": {
+            "type": "object",
+            "properties": {
+              "absolute": { "type": "array", "items": { "type": "object", "properties": { "source": { "type": "string" }, "amount": { "type": "number" } } } },
+              "percentage": { "type": "array", "items": { "type": "object", "properties": { "source": { "type": "string" }, "percentage": { "type": "number" } } } }
+            }
+          },
+          "scarcity_multiplier": { "type": "number" },
+          "final_amount": { "type": "number" },
+          "precedence_applied": { "type": "string" },
+          "breakdown": { "type": "string" }
+        }
+      }
+    }
+  }
+}

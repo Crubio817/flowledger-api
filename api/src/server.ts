@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-// Load dotenv early so any services reading process.env at import time see values
+import * as WebSocket from 'ws';
+import * as http from 'http';
+// Load dotenv early so any services reading process.env see values
 import './config/env';
 // config/env is imported dynamically to allow Key Vault secret hydration before assertions
 import { errorHandler } from './middleware/error';
@@ -43,6 +45,9 @@ import pursuitsActions from './routes/pursuits.actions';
 import workstream from './routes/workstream';
 import principals from './routes/principals';
 import comms from './routes/comms';
+import engagements from './routes/engagements';
+import billing from './routes/billing';
+// import automation from './routes/automation';
 
 export async function createApp() {
   // If KeyVault is configured, hydrate secrets first
@@ -124,11 +129,76 @@ app.use('/api/pursuits', pursuitsActions);
 app.use('/api/workstream', workstream);
 app.use('/api/principals', principals);
 app.use('/api/comms', comms);
+app.use('/api/engagements', engagements);
+app.use('/api/billing', billing);
+// app.use('/api/automation', automation);
 
 app.use('/webhooks', webhooks);
 app.post('/mcp', handleMCPRequest);
 
 app.use(errorHandler);
+
+// WebSocket Server Setup
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// WebSocket connection handling
+wss.on('connection', (ws: WebSocket, req: any) => {
+  console.log('[WebSocket] New connection established');
+
+  ws.on('message', async (message: Buffer) => {
+    try {
+      const data = JSON.parse(message.toString());
+
+      switch (data.type) {
+        case 'ping':
+          ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+          break;
+
+        case 'subscribe':
+          // Handle subscription logic here
+          console.log('[WebSocket] Subscription request:', data);
+          ws.send(JSON.stringify({
+            type: 'subscribed',
+            subscription_type: data.subscription_type,
+            resource_id: data.resource_id
+          }));
+          break;
+
+        case 'unsubscribe':
+          // Handle unsubscription logic here
+          console.log('[WebSocket] Unsubscription request:', data);
+          ws.send(JSON.stringify({
+            type: 'unsubscribed',
+            subscription_type: data.subscription_type,
+            resource_id: data.resource_id
+          }));
+          break;
+
+        default:
+          console.log('[WebSocket] Unknown message type:', data.type);
+      }
+    } catch (error) {
+      console.error('[WebSocket] Error processing message:', error);
+      ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('[WebSocket] Connection closed');
+  });
+
+  ws.on('error', (error: Error) => {
+    console.error('[WebSocket] Connection error:', error);
+  });
+
+  // Send welcome message
+  ws.send(JSON.stringify({
+    type: 'welcome',
+    message: 'Connected to FlowLedger Communication Hub',
+    timestamp: new Date().toISOString()
+  }));
+});
 
 // OpenAPI (must be after routes so annotations are picked up by scanner)
     try {
@@ -138,15 +208,16 @@ app.use(errorHandler);
       console.warn('[startup] OpenAPI setup failed:', e);
     }
 // setupOpenApi(app);
-  return app;
+  return { app, server };
 }
 
 // If run directly, start listener (preserve original CLI behavior)
 if (require.main === module) {
-  createApp().then(async (app) => {
+  createApp().then(async ({ app, server }) => {
     const { env } = await import('./config/env');
-    app.listen(env.port, () => {
+    server.listen(env.port, () => {
       console.log(`API listening on http://localhost:${env.port} (sql.auth=${env.sql.auth})`);
+      console.log(`WebSocket server ready on ws://localhost:${env.port}`);
     });
   }).catch(err => { console.error('Failed to start server', err); process.exit(1); });
 }
