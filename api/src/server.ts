@@ -30,7 +30,19 @@ import ai from './routes/ai';
 import taskPacks from './routes/task_packs';
 import industries from './routes/industries';
 import clientNotes from './routes/client_notes';
+import webhooks from './routes/webhooks';
+import { handleMCPRequest } from './mcp';
 import { setupOpenApi } from './docs/openapi';
+import modulesRouter from './routes/modules';
+import coreRouter from './routes/core';
+import signals from './routes/signals';
+import candidates from './routes/candidates';
+import pursuits from './routes/pursuits';
+import candidatesActions from './routes/candidates.actions';
+import pursuitsActions from './routes/pursuits.actions';
+import workstream from './routes/workstream';
+import principals from './routes/principals';
+import comms from './routes/comms';
 
 export async function createApp() {
   // If KeyVault is configured, hydrate secrets first
@@ -102,6 +114,19 @@ app.use('/api/audit-step-progress', auditStepProgress);
 app.use('/api/task-packs', taskPacks);
 app.use('/api/industries', industries);
 app.use('/api', clientNotes);
+app.use('/api/modules', modulesRouter);
+app.use('/api/core', coreRouter);
+app.use('/api/signals', signals);
+app.use('/api/candidates', candidates);
+app.use('/api/pursuits', pursuits);
+app.use('/api/candidates', candidatesActions);
+app.use('/api/pursuits', pursuitsActions);
+app.use('/api/workstream', workstream);
+app.use('/api/principals', principals);
+app.use('/api/comms', comms);
+
+app.use('/webhooks', webhooks);
+app.post('/mcp', handleMCPRequest);
 
 app.use(errorHandler);
 

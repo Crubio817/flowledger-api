@@ -800,6 +800,447 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/principals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List principals */
+        get: {
+            parameters: {
+                query?: {
+                    org_id?: number;
+                    page?: number;
+                    limit?: number;
+                    principal_type?: string;
+                    is_active?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: components["schemas"]["Principal"][];
+                            meta?: components["schemas"]["PageMeta"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create principal */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        org_id: number;
+                        principal_type: "person" | "service" | "team";
+                        display_name?: string;
+                        primary_email?: string;
+                        is_internal?: boolean;
+                    };
+                };
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: components["schemas"]["Principal"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/principals/{principal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get principal by ID */
+        get: {
+            parameters: {
+                query?: {
+                    org_id?: number;
+                };
+                header?: never;
+                path: {
+                    principal_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: components["schemas"]["Principal"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Update principal */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    principal_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        display_name?: string;
+                        primary_email?: string;
+                        is_active?: boolean;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: components["schemas"]["Principal"];
+                        };
+                    };
+                };
+            };
+        };
+        /** Delete principal */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    principal_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        trace?: never;
+    };
+    "/api/comms/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List communication threads */
+        get: {
+            parameters: {
+                query?: {
+                    org_id?: number;
+                    page?: number;
+                    limit?: number;
+                    mailbox_id?: number;
+                    client_id?: number;
+                    status?: string;
+                    process_state?: string;
+                    assigned_principal_id?: number;
+                    tag?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: components["schemas"]["CommsThread"][];
+                            meta?: components["schemas"]["PageMeta"];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comms/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get thread details */
+        get: {
+            parameters: {
+                query?: {
+                    org_id?: number;
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    thread_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: {
+                                thread: components["schemas"]["CommsThread"];
+                                messages: components["schemas"]["CommsMessage"][];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Update thread */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    thread_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        status?: "active" | "pending" | "resolved" | "escalated" | "on_hold" | "reopened";
+                        process_state?: "triage" | "in_processing" | "queued" | "done" | "archived";
+                        assigned_principal_id?: number;
+                        tags?: string[];
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: { updated: boolean };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        trace?: never;
+    };
+    "/api/comms/threads/{thread_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reply to thread */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    thread_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        org_id: number;
+                        body: string;
+                        attachments?: components["schemas"]["AttachmentUpload"][];
+                    };
+                };
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: { message_id: number };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comms/threads/{thread_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link thread to work item */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    thread_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        org_id: number;
+                        item_type: string;
+                        item_id: number;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: { linked: boolean };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comms/attachments/{attachment_id}/save-as-doc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save attachment as document */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    attachment_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        org_id: number;
+                    };
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: "ok";
+                            data?: { doc_id: number };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -897,6 +1338,70 @@ export interface components {
             pending_onboarding_tasks?: number;
             /** Format: date-time */
             last_activity_utc?: string | null;
+        };
+        /** Identity & Comms Hub Schemas */
+        Principal: {
+            principal_id: number;
+            org_id: number;
+            principal_type: "person" | "service" | "team";
+            display_name?: string;
+            primary_email?: string;
+            is_internal: boolean;
+            is_active: boolean;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        CommsThread: {
+            thread_id: number;
+            org_id: number;
+            mailbox_id: number;
+            channel: "email" | "ticket";
+            subject: string;
+            status: "active" | "pending" | "resolved" | "escalated" | "on_hold" | "reopened";
+            process_state: "triage" | "in_processing" | "queued" | "done" | "archived";
+            assigned_principal_id?: number;
+            client_id?: number;
+            sla_rule_id?: number;
+            /** Format: date-time */
+            first_msg_at?: string;
+            /** Format: date-time */
+            last_msg_at: string;
+            internet_conv_id?: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            assignee_name?: string;
+            client_name?: string;
+        };
+        CommsMessage: {
+            message_id: number;
+            org_id: number;
+            thread_id: number;
+            direction: "in" | "out";
+            provider: "graph" | "zammad";
+            provider_msg_id: string;
+            internet_msg_id?: string;
+            from_addr?: string;
+            to_addrs_json?: string;
+            /** Format: date-time */
+            sent_at: string;
+            snippet?: string;
+            body_blob_url?: string;
+            has_attachments: boolean;
+            /** Format: date-time */
+            created_at: string;
+            attachment_name?: string;
+            mime_type?: string;
+            size_bytes?: number;
+        };
+        AttachmentUpload: {
+            name: string;
+            mime_type: string;
+            size_bytes: number;
+            blob_url: string;
         };
     };
     responses: never;

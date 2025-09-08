@@ -11,14 +11,20 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint .",
-  "test": "jest --runInBand",
+    "test": "jest --runInBand",
     "db:ping": "node scripts/db-ping.cjs",
+  "db:migrate:core-modules": "node scripts/run-core-modules-migration.cjs",
+  "db:migrate:fix-int-client": "node scripts/fix-module-instance-client.cjs",
     "db:schema": "ts-node scripts/schema-introspect.ts",
-  "gen:api:snapshot": "node fetch-openapi.js"
+    "gen:api:snapshot": "node fetch-openapi.js"
   },
   "dependencies": {
     "@azure/identity": "^4.11.1",
     "@azure/keyvault-secrets": "^4.10.1",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
@@ -31,6 +37,7 @@
     "openai": "^4.56.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "uuid": "^12.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -38,9 +45,11 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/helmet": "^4.0.0",
+    "@types/jest": "^29.5.3",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mssql": "^9.1.7",
     "@types/node": "^20.14.10",
+    "@types/supertest": "^2.0.12",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
@@ -48,19 +57,17 @@
     "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
+    "jest": "^29.6.0",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4"
-  ,
-  "jest": "^29.6.0",
-  "ts-jest": "^29.1.0",
-  "supertest": "^6.3.3",
-  "@types/jest": "^29.5.3",
-  "@types/supertest": "^2.0.12"
-  }
-  ,
+  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/test/**/*.test.ts"]
+    "testMatch": [
+      "**/test/**/*.test.ts"
+    ]
   }
 }

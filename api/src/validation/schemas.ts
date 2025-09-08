@@ -342,3 +342,256 @@ export const ClientNoteUpdateBody = ClientNoteSchema.pick({
 }).partial().refine(d => Object.keys(d).length>0, 'At least one field required');
 
 export type ClientNote = z.infer<typeof ClientNoteSchema>;
+
+// Workstream Module Schemas
+
+export const SignalSchema = z.object({
+  signal_id: z.number().int().optional(),
+  org_id: z.number().int(),
+  source_type: z.enum(['email', 'ad', 'call', 'note']),
+  source_ref: z.string().max(256).nullable().optional(),
+  snippet: z.string().max(1000).nullable().optional(),
+  contact_id: z.number().int().nullable().optional(),
+  client_id: z.number().int().nullable().optional(),
+  ts: z.coerce.date().optional(),
+  problem_phrase: z.string().max(300).nullable().optional(),
+  solution_hint: z.string().max(300).nullable().optional(),
+  urgency_score: z.number().min(0).max(1).nullable().optional(),
+  dedupe_key: z.string().max(128),
+  cluster_id: z.number().int().nullable().optional(),
+  idempotency_key: z.string().max(64).nullable().optional(),
+  owner_user_id: z.number().int().nullable().optional(),
+  created_at: z.coerce.date().optional(),
+  updated_at: z.coerce.date().optional()
+});
+
+export const SignalCreateBody = SignalSchema.pick({
+  org_id: true,
+  source_type: true,
+  source_ref: true,
+  snippet: true,
+  contact_id: true,
+  client_id: true,
+  problem_phrase: true,
+  solution_hint: true,
+  urgency_score: true,
+  dedupe_key: true,
+  cluster_id: true,
+  idempotency_key: true,
+  owner_user_id: true
+}).partial({
+  source_ref: true,
+  snippet: true,
+  contact_id: true,
+  client_id: true,
+  problem_phrase: true,
+  solution_hint: true,
+  urgency_score: true,
+  cluster_id: true,
+  idempotency_key: true,
+  owner_user_id: true
+});
+
+export const SignalUpdateBody = SignalSchema.pick({
+  source_type: true,
+  source_ref: true,
+  snippet: true,
+  contact_id: true,
+  client_id: true,
+  problem_phrase: true,
+  solution_hint: true,
+  urgency_score: true,
+  cluster_id: true,
+  owner_user_id: true
+}).partial().refine(d => Object.keys(d).length > 0, 'At least one field required');
+
+export const CandidateSchema = z.object({
+  candidate_id: z.number().int().optional(),
+  org_id: z.number().int(),
+  client_id: z.number().int().nullable().optional(),
+  contact_id: z.number().int().nullable().optional(),
+  problem_id: z.number().int().nullable().optional(),
+  solution_id: z.number().int().nullable().optional(),
+  title: z.string().max(200).nullable().optional(),
+  one_liner_scope: z.string().max(280).nullable().optional(),
+  confidence: z.number().min(0).max(1).nullable().optional(),
+  value_band: z.enum(['low', 'med', 'high']).nullable().optional(),
+  next_step: z.string().max(200).nullable().optional(),
+  status: z.enum(['new', 'triaged', 'nurture', 'on_hold', 'promoted', 'archived']),
+  owner_user_id: z.number().int().nullable().optional(),
+  last_touch_at: z.coerce.date().nullable().optional(),
+  created_at: z.coerce.date().optional(),
+  updated_at: z.coerce.date().optional()
+});
+
+export const CandidateCreateBody = CandidateSchema.pick({
+  org_id: true,
+  client_id: true,
+  contact_id: true,
+  problem_id: true,
+  solution_id: true,
+  title: true,
+  one_liner_scope: true,
+  confidence: true,
+  value_band: true,
+  next_step: true,
+  status: true,
+  owner_user_id: true
+}).partial({
+  client_id: true,
+  contact_id: true,
+  problem_id: true,
+  solution_id: true,
+  title: true,
+  one_liner_scope: true,
+  confidence: true,
+  value_band: true,
+  next_step: true,
+  owner_user_id: true
+});
+
+export const CandidateUpdateBody = CandidateSchema.pick({
+  client_id: true,
+  contact_id: true,
+  problem_id: true,
+  solution_id: true,
+  title: true,
+  one_liner_scope: true,
+  confidence: true,
+  value_band: true,
+  next_step: true,
+  status: true,
+  owner_user_id: true,
+  last_touch_at: true
+}).partial().refine(d => Object.keys(d).length > 0, 'At least one field required');
+
+export const PursuitSchema = z.object({
+  pursuit_id: z.number().int().optional(),
+  org_id: z.number().int(),
+  candidate_id: z.number().int(),
+  due_date: z.coerce.date().nullable().optional(),
+  capture_lead_id: z.number().int().nullable().optional(),
+  proposal_mgr_id: z.number().int().nullable().optional(),
+  pursuit_stage: z.enum(['qual', 'pink', 'red', 'submit', 'won', 'lost']),
+  compliance_score: z.number().min(0).max(100).nullable().optional(),
+  forecast_value_usd: z.number().nullable().optional(),
+  cos_hours: z.number().nullable().optional(),
+  cos_amount: z.number().nullable().optional(),
+  created_at: z.coerce.date().optional(),
+  updated_at: z.coerce.date().optional()
+});
+
+export const PursuitCreateBody = PursuitSchema.pick({
+  org_id: true,
+  candidate_id: true,
+  due_date: true,
+  capture_lead_id: true,
+  proposal_mgr_id: true,
+  pursuit_stage: true,
+  compliance_score: true,
+  forecast_value_usd: true,
+  cos_hours: true,
+  cos_amount: true
+}).partial({
+  due_date: true,
+  capture_lead_id: true,
+  proposal_mgr_id: true,
+  compliance_score: true,
+  forecast_value_usd: true,
+  cos_hours: true,
+  cos_amount: true
+});
+
+export const PursuitUpdateBody = PursuitSchema.pick({
+  due_date: true,
+  capture_lead_id: true,
+  proposal_mgr_id: true,
+  pursuit_stage: true,
+  compliance_score: true,
+  forecast_value_usd: true,
+  cos_hours: true,
+  cos_amount: true
+}).partial().refine(d => Object.keys(d).length > 0, 'At least one field required');
+
+export const ProposalSchema = z.object({
+  proposal_id: z.number().int().optional(),
+  org_id: z.number().int(),
+  pursuit_id: z.number().int(),
+  version: z.number().int(),
+  doc_id: z.string().max(128).nullable().optional(),
+  status: z.enum(['draft', 'sent', 'signed', 'void']),
+  sent_at: z.coerce.date().nullable().optional(),
+  created_at: z.coerce.date().optional()
+});
+
+export const ProposalCreateBody = ProposalSchema.pick({
+  org_id: true,
+  pursuit_id: true,
+  version: true,
+  doc_id: true,
+  status: true,
+  sent_at: true
+}).partial({
+  doc_id: true,
+  sent_at: true
+});
+
+export const WorkEventSchema = z.object({
+  event_id: z.number().int().optional(),
+  org_id: z.number().int(),
+  item_type: z.enum(['signal', 'candidate', 'pursuit']),
+  item_id: z.number().int(),
+  event_name: z.string().max(40),
+  payload_json: z.string().nullable().optional(),
+  happened_at: z.coerce.date().optional(),
+  actor_user_id: z.number().int().nullable().optional()
+});
+
+export const WorkEventCreateBody = WorkEventSchema.pick({
+  org_id: true,
+  item_type: true,
+  item_id: true,
+  event_name: true,
+  payload_json: true,
+  actor_user_id: true
+}).partial({
+  payload_json: true,
+  actor_user_id: true
+});
+
+export const DripScheduleSchema = z.object({
+  drip_id: z.number().int().optional(),
+  org_id: z.number().int(),
+  candidate_id: z.number().int(),
+  template_id: z.number().int(),
+  next_run_at: z.coerce.date(),
+  cadence_days: z.number().int(),
+  status: z.enum(['active', 'paused', 'done']),
+  last_sent_at: z.coerce.date().nullable().optional()
+});
+
+export const DripScheduleCreateBody = DripScheduleSchema.pick({
+  org_id: true,
+  candidate_id: true,
+  template_id: true,
+  next_run_at: true,
+  cadence_days: true,
+  status: true,
+  last_sent_at: true
+}).partial({
+  last_sent_at: true
+});
+
+export const DripScheduleUpdateBody = DripScheduleSchema.pick({
+  next_run_at: true,
+  cadence_days: true,
+  status: true,
+  last_sent_at: true
+}).partial().refine(d => Object.keys(d).length > 0, 'At least one field required');
+
+export type Signal = z.infer<typeof SignalSchema>;
+export type Candidate = z.infer<typeof CandidateSchema>;
+export type Pursuit = z.infer<typeof PursuitSchema>;
+export type Proposal = z.infer<typeof ProposalSchema>;
+export type WorkEvent = z.infer<typeof WorkEventSchema>;
+export type DripSchedule = z.infer<typeof DripScheduleSchema>;

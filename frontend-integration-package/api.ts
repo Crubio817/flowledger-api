@@ -154,3 +154,114 @@ export async function createClientViaProcedure(data: {
   const response = await api.post('/clients/create-proc', data);
   return response.data;
 }
+
+// ==========================================
+// IDENTITY & COMMS HUB API METHODS
+// ==========================================
+
+// Principals API
+export async function getPrincipals(params?: {
+  org_id?: number;
+  page?: number;
+  limit?: number;
+  principal_type?: string;
+  is_active?: boolean;
+}) {
+  const response = await api.get('/principals', { params });
+  return response.data.data;
+}
+
+export async function getPrincipal(principalId: number, params?: { org_id?: number }) {
+  const response = await api.get(`/principals/${principalId}`, { params });
+  return response.data.data;
+}
+
+export async function createPrincipal(data: {
+  org_id: number;
+  principal_type: 'person' | 'service' | 'team';
+  display_name?: string;
+  primary_email?: string;
+  is_internal?: boolean;
+}) {
+  const response = await api.post('/principals', data);
+  return response.data.data;
+}
+
+export async function updatePrincipal(principalId: number, data: {
+  display_name?: string;
+  primary_email?: string;
+  is_active?: boolean;
+}) {
+  const response = await api.patch(`/principals/${principalId}`, data);
+  return response.data.data;
+}
+
+export async function deletePrincipal(principalId: number) {
+  const response = await api.delete(`/principals/${principalId}`);
+  return response.data;
+}
+
+// Communications API
+export async function getCommsThreads(params?: {
+  org_id?: number;
+  page?: number;
+  limit?: number;
+  mailbox_id?: number;
+  client_id?: number;
+  status?: string;
+  process_state?: string;
+  assigned_principal_id?: number;
+  tag?: string;
+}) {
+  const response = await api.get('/comms/threads', { params });
+  return response.data.data;
+}
+
+export async function getCommsThread(threadId: number, params?: {
+  org_id?: number;
+  page?: number;
+  limit?: number;
+}) {
+  const response = await api.get(`/comms/threads/${threadId}`, { params });
+  return response.data.data;
+}
+
+export async function updateCommsThread(threadId: number, data: {
+  status?: 'active' | 'pending' | 'resolved' | 'escalated' | 'on_hold' | 'reopened';
+  process_state?: 'triage' | 'in_processing' | 'queued' | 'done' | 'archived';
+  assigned_principal_id?: number;
+  tags?: string[];
+}) {
+  const response = await api.patch(`/comms/threads/${threadId}`, data);
+  return response.data.data;
+}
+
+export async function replyToCommsThread(threadId: number, data: {
+  org_id: number;
+  body: string;
+  attachments?: {
+    name: string;
+    mime_type: string;
+    size_bytes: number;
+    blob_url: string;
+  }[];
+}) {
+  const response = await api.post(`/comms/threads/${threadId}/reply`, data);
+  return response.data.data;
+}
+
+export async function linkCommsThread(threadId: number, data: {
+  org_id: number;
+  item_type: string;
+  item_id: number;
+}) {
+  const response = await api.post(`/comms/threads/${threadId}/link`, data);
+  return response.data.data;
+}
+
+export async function saveAttachmentAsDoc(attachmentId: number, data: {
+  org_id: number;
+}) {
+  const response = await api.post(`/comms/attachments/${attachmentId}/save-as-doc`, data);
+  return response.data.data;
+}

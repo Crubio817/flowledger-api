@@ -1,4 +1,4 @@
-nohup: ignoring input
+Skipping openapi.additions.json merge; set OPENAPI_MERGE_ADDITIONS=true to enable
 Serving openapi snapshot from /workspaces/flowledger-api/api/openapi.snapshot.json
 API listening on http://localhost:4001 (sql.auth=sql)
 [db] Connecting using auth=sql user=radar_admin

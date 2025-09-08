@@ -5,37 +5,79 @@ import type { Options } from 'swagger-jsdoc';
 import { Express } from 'express';
 import { serve as swaggerServe, setup as swaggerSetup } from 'swagger-ui-express';
 
+// Build a robust set of file globs so swagger-jsdoc can find
+// route annotations both in TS (dev) and JS (built) outputs.
+const apiGlobs: string[] = [
+  // Source files (dev via ts-node / ts-node-dev)
+  path.resolve(process.cwd(), 'api', 'src', '**', '*.ts'),
+  // Built files (prod after tsc)
+  path.resolve(process.cwd(), 'api', 'dist', '**', '*.js')
+];
+
+// Try to read version from package.json; fall back to hardcoded.
+function readPackageVersion(): string {
+  try {
+    const pkgPath = path.resolve(process.cwd(), 'api', 'package.json');
+    const raw = fs.readFileSync(pkgPath, 'utf8');
+    const pkg = JSON.parse(raw);
+    return pkg.version || '0.1.0';
+  } catch {
+    return '0.1.0';
+  }
+}
+
 const options: Options = {
+  apis: apiGlobs,
   definition: {
     openapi: '3.0.3',
     info: {
       title: 'FlowLedger API',
-      version: '0.1.1',
+      version: readPackageVersion(),
       description: 'API for managing clients, audits, industries, and related business processes'
     },
     servers: [
       { url: '/', description: 'Relative to current host' },
       { url: 'http://localhost:4001', description: 'Local dev server' }
     ],
+    // Initial tags (will be normalized and merged with discovered tags later)
     tags: [
       { name: 'Clients', description: 'Client management operations' },
       { name: 'ClientContacts', description: 'Client contact management' },
+      { name: 'ClientDocuments', description: 'Client document storage and metadata' },
+      { name: 'ClientEngagements', description: 'Engagements per client' },
+      { name: 'ClientIntegrations', description: 'External integrations per client' },
+      { name: 'ClientLocations', description: 'Client location management' },
+      { name: 'ClientNotes', description: 'Client note management' },
+      { name: 'ClientOnboardingTasks', description: 'Onboarding task operations' },
+      { name: 'ClientTagMap', description: 'Mapping between clients and tags' },
       { name: 'ClientTags', description: 'Client tag management' },
       { name: 'ContactSocialProfiles', description: 'Social media profile management for contacts' },
-      { name: 'ClientNotes', description: 'Client note management' },
       { name: 'Industries', description: 'Industry management and client-industry relationships' },
       { name: 'TaskPacks', description: 'Task pack and task management' },
       { name: 'Audits', description: 'Audit management operations' },
+      { name: 'SIPOC', description: 'SIPOC documents' },
+      { name: 'Interviews', description: 'Interview scheduling and retrieval' },
+      { name: 'Interview Responses', description: 'Interview question/answer responses' },
+      { name: 'Findings', description: 'Audit findings' },
+      { name: 'Process Maps', description: 'Process map files and references' },
+      { name: 'PathTemplates', description: 'Reusable audit path templates' },
+      { name: 'PathSteps', description: 'Steps within an audit path' },
+      { name: 'Audit Step Progress', description: 'Per-step audit progress tracking' },
+      { name: 'Views', description: 'Read-only dashboard/overview views' },
       { name: 'AI', description: 'AI-powered features and tools' },
+      { name: 'Auto', description: 'Auto-generated/experimental endpoints' },
+      { name: 'Webhooks', description: 'Inbound webhook handlers' },
       { name: 'Misc', description: 'Uncategorized endpoints (auto-grouped)' }
     ],
+    // Consumed by ReDoc for left-nav grouping
     'x-tagGroups': [
-      { name: 'Clients', tags: ['Clients', 'ClientContacts', 'ClientNotes', 'ClientTags', 'ContactSocialProfiles'] },
-      { name: 'AI', tags: ['AI'] },
-      { name: 'Industries', tags: ['Industries'] },
+      { name: 'Clients', tags: ['Clients', 'ClientContacts', 'ClientDocuments', 'ClientNotes', 'ClientIntegrations', 'ClientLocations', 'ClientOnboardingTasks', 'ClientTagMap', 'ClientTags', 'ContactSocialProfiles'] },
+      { name: 'Audits', tags: ['Audits', 'SIPOC', 'Interviews', 'Interview Responses', 'Findings', 'Process Maps', 'PathTemplates', 'PathSteps', 'Audit Step Progress'] },
       { name: 'Tasks', tags: ['TaskPacks'] },
-      { name: 'Audits', tags: ['Audits'] },
-      { name: 'Misc', tags: ['Misc'] }
+      { name: 'Views', tags: ['Views'] },
+      { name: 'AI', tags: ['AI'] },
+      { name: 'Integrations', tags: ['Webhooks'] },
+      { name: 'Misc', tags: ['Auto', 'Misc'] }
     ],
     components: {
       schemas: {
@@ -301,6 +343,7 @@ const options: Options = {
             name: { type: 'string', minLength: 1, maxLength: 200, description: 'The client\'s name (required)' },
             is_active: { type: 'boolean', description: 'Whether the client is active (1) or a prospect (0). Defaults to true if not provided.' },
             pack_code: { type: 'string', maxLength: 64, nullable: true, description: 'A code for onboarding task packs. If not provided, falls back to default tasks.' },
+            logo_url: { type: 'string', maxLength: 512, nullable: true, description: 'URL to the client\'s logo image' },
             contacts_json: {
               type: 'array',
               items: { $ref: '#/components/schemas/ContactJsonItem' },
@@ -2172,8 +2215,7 @@ const options: Options = {
         }
       }
     }
-  },
-  apis: ['src/**/*.ts']
+  }
 };
 
 export function setupOpenApi(app: Express) {
@@ -2263,13 +2305,32 @@ export function setupOpenApi(app: Express) {
   try {
     const pathTagMap: Array<{ prefix: string; tag: string }> = [
       { prefix: '/api/ai', tag: 'AI' },
+      { prefix: '/api/auto', tag: 'Auto' },
+      { prefix: '/api/audits', tag: 'Audits' },
+      { prefix: '/api/audit-sipoc', tag: 'SIPOC' },
+      { prefix: '/api/audit-step-progress', tag: 'Audit Step Progress' },
+      { prefix: '/api/interviews', tag: 'Interviews' },
+      { prefix: '/api/interview-responses', tag: 'Interview Responses' },
+      { prefix: '/api/findings', tag: 'Findings' },
+      { prefix: '/api/process-maps', tag: 'Process Maps' },
+      { prefix: '/api/path-templates', tag: 'PathTemplates' },
+      { prefix: '/api/path-steps', tag: 'PathSteps' },
       { prefix: '/api/clients', tag: 'Clients' },
       { prefix: '/api/client-contacts', tag: 'ClientContacts' },
-      { prefix: '/api/contact-social-profiles', tag: 'ContactSocialProfiles' },
+      { prefix: '/api/client-documents', tag: 'ClientDocuments' },
+      { prefix: '/api/client-engagements', tag: 'ClientEngagements' },
+      { prefix: '/api/client-integrations', tag: 'ClientIntegrations' },
+      { prefix: '/api/client-locations', tag: 'ClientLocations' },
+      { prefix: '/api/client-onboarding-tasks', tag: 'ClientOnboardingTasks' },
+      { prefix: '/api/onboarding-tasks', tag: 'ClientOnboardingTasks' },
+      { prefix: '/api/client-tag-map', tag: 'ClientTagMap' },
       { prefix: '/api/client-tags', tag: 'ClientTags' },
+      { prefix: '/api/contact-social-profiles', tag: 'ContactSocialProfiles' },
       { prefix: '/api/industries', tag: 'Industries' },
       { prefix: '/api/task-packs', tag: 'TaskPacks' },
-      { prefix: '/api/audits', tag: 'Audits' }
+      { prefix: '/api/dashboard-stats', tag: 'Views' },
+      { prefix: '/api/audit-recent-touch', tag: 'Views' },
+      { prefix: '/api/clients-overview', tag: 'Views' },
     ];
     const httpMethods = ['get','post','put','patch','delete','options','head','trace'];
     for (const p of Object.keys(spec.paths || {})) {
@@ -2284,8 +2345,45 @@ export function setupOpenApi(app: Express) {
         }
       }
     }
+    // Also mark webhook endpoints
+    for (const p of Object.keys(spec.paths || {})) {
+      if (p.startsWith('/webhooks')) {
+        const ops = spec.paths[p];
+        for (const m of httpMethods) {
+          const op = ops?.[m];
+          if (!op) continue;
+          const hasTags = Array.isArray(op.tags) && op.tags.length > 0 && op.tags[0] !== 'default';
+          if (!hasTags) op.tags = ['Webhooks'];
+        }
+      }
+    }
   } catch (e) {
     console.warn('Auto-tagging OpenAPI operations failed:', e);
+  }
+
+  // Normalize tags and x-tagGroups so UI shows clean groups
+  try {
+    const discovered = new Set<string>();
+    const httpMethods = ['get','post','put','patch','delete','options','head','trace'];
+    for (const p of Object.keys(spec.paths || {})) {
+      const ops = spec.paths[p];
+      for (const m of httpMethods) {
+        const op = ops?.[m];
+        if (!op) continue;
+        const opTags: string[] = Array.isArray(op.tags) ? op.tags : [];
+        for (const t of opTags) discovered.add(t);
+      }
+    }
+    const curated = (options.definition as any)?.tags ?? [];
+    const merged: Array<{ name: string; description?: string }> = [];
+    const byName = new Map<string, { name: string; description?: string }>();
+    for (const t of curated) byName.set(t.name, t);
+    for (const t of discovered) if (!byName.has(t)) byName.set(t, { name: t });
+    for (const t of byName.values()) merged.push(t);
+    spec.tags = merged.sort((a: any, b: any) => String(a.name).localeCompare(String(b.name)));
+    if (!spec['x-tagGroups']) spec['x-tagGroups'] = (options.definition as any)['x-tagGroups'];
+  } catch (e) {
+    console.warn('Failed to normalize OpenAPI tags:', e);
   }
 
   app.get('/openapi.json', (_req, res) => res.json(spec));

@@ -1,0 +1,3337 @@
+[db] Connecting using auth=sql user=radar_admin
+{
+  "tables": [
+    {
+      "table": "activity_log",
+      "columns": [
+        {
+          "column_name": "log_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "entity_type",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "entity_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "action",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "details",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "actor_user_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 7
+        }
+      ]
+    },
+    {
+      "table": "audit_sipoc",
+      "columns": [
+        {
+          "column_name": "audit_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "suppliers_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 2
+        },
+        {
+          "column_name": "inputs_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "process_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "outputs_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "customers_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "metrics_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": false,
+          "column_id": 8
+        }
+      ]
+    },
+    {
+      "table": "audit_step_progress",
+      "columns": [
+        {
+          "column_name": "progress_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "audit_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "step_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "status",
+          "data_type": "nvarchar",
+          "max_length": 60,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "started_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "completed_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "output_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "notes",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "audits",
+      "columns": [
+        {
+          "column_name": "audit_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "engagement_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "phase",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "percent_complete",
+          "data_type": "decimal",
+          "max_length": 5,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "state",
+          "data_type": "nvarchar",
+          "max_length": 60,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "domain",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "audit_type",
+          "data_type": "nvarchar",
+          "max_length": 160,
+          "is_nullable": true,
+          "column_id": 10
+        },
+        {
+          "column_name": "path_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 11
+        },
+        {
+          "column_name": "current_step_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 12
+        },
+        {
+          "column_name": "start_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 13
+        },
+        {
+          "column_name": "end_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 14
+        },
+        {
+          "column_name": "owner_contact_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 15
+        },
+        {
+          "column_name": "notes",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 16
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 17
+        }
+      ]
+    },
+    {
+      "table": "candidate",
+      "columns": [
+        {
+          "column_name": "candidate_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "contact_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "problem_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "solution_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "one_liner_scope",
+          "data_type": "nvarchar",
+          "max_length": 560,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "confidence",
+          "data_type": "decimal",
+          "max_length": 5,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "value_band",
+          "data_type": "varchar",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 10
+        },
+        {
+          "column_name": "next_step",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 11
+        },
+        {
+          "column_name": "status",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": true,
+          "column_id": 12
+        },
+        {
+          "column_name": "owner_user_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 13
+        },
+        {
+          "column_name": "last_touch_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 14
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 15
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 16
+        },
+        {
+          "column_name": "row_version",
+          "data_type": "timestamp",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 17
+        }
+      ]
+    },
+    {
+      "table": "candidate_signal",
+      "columns": [
+        {
+          "column_name": "candidate_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "signal_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        }
+      ]
+    },
+    {
+      "table": "client_activity",
+      "columns": [
+        {
+          "column_name": "activity_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "actor_user_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "verb",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "summary",
+          "data_type": "nvarchar",
+          "max_length": 600,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "meta_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 7
+        }
+      ]
+    },
+    {
+      "table": "client_contacts",
+      "columns": [
+        {
+          "column_name": "contact_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "first_name",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "last_name",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "email",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "phone",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 240,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "is_primary",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 10
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 11
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 12
+        }
+      ]
+    },
+    {
+      "table": "client_documents",
+      "columns": [
+        {
+          "column_name": "document_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "engagement_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "category",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "filename",
+          "data_type": "nvarchar",
+          "max_length": 600,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "blob_url",
+          "data_type": "nvarchar",
+          "max_length": 2000,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "uploaded_by_user",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "uploaded_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "client_engagements",
+      "columns": [
+        {
+          "column_name": "engagement_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "status",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "start_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "end_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "notes",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "client_industries",
+      "columns": [
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "industry_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "is_primary",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 5
+        }
+      ]
+    },
+    {
+      "table": "client_integrations",
+      "columns": [
+        {
+          "column_name": "integration_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "provider",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "status",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "external_account_id",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "secret_ref",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "client_locations",
+      "columns": [
+        {
+          "column_name": "location_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "label",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "line1",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "line2",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "city",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "state_province",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "postal_code",
+          "data_type": "nvarchar",
+          "max_length": 60,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "country",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "is_primary",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 10
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 11
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 12
+        }
+      ]
+    },
+    {
+      "table": "client_notes",
+      "columns": [
+        {
+          "column_name": "note_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "content",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "note_type",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "is_important",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": true,
+          "column_id": 10
+        },
+        {
+          "column_name": "updated_by",
+          "data_type": "nvarchar",
+          "max_length": 200,
+          "is_nullable": true,
+          "column_id": 11
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 12
+        }
+      ]
+    },
+    {
+      "table": "client_onboarding_tasks",
+      "columns": [
+        {
+          "column_name": "task_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "description",
+          "data_type": "nvarchar",
+          "max_length": 2000,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "status",
+          "data_type": "varchar",
+          "max_length": 20,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "due_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "completed_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "assignee_user_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "sort_order",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 10
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 11
+        }
+      ]
+    },
+    {
+      "table": "client_tag_map",
+      "columns": [
+        {
+          "column_name": "tag_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "engagement_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 4
+        }
+      ]
+    },
+    {
+      "table": "client_tags",
+      "columns": [
+        {
+          "column_name": "tag_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "tag_name",
+          "data_type": "nvarchar",
+          "max_length": 160,
+          "is_nullable": false,
+          "column_id": 2
+        }
+      ]
+    },
+    {
+      "table": "clients",
+      "columns": [
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "row_version",
+          "data_type": "timestamp",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "logo_url",
+          "data_type": "nvarchar",
+          "max_length": 1024,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 7
+        }
+      ]
+    },
+    {
+      "table": "contact_social_profiles",
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "contact_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "provider",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "profile_url",
+          "data_type": "nvarchar",
+          "max_length": 1024,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "is_primary",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 8
+        }
+      ]
+    },
+    {
+      "table": "cos_entry",
+      "columns": [
+        {
+          "column_name": "cos_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "pursuit_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "role",
+          "data_type": "varchar",
+          "max_length": 64,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "hours",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "rate",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "amount",
+          "data_type": "decimal",
+          "max_length": 13,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "source",
+          "data_type": "varchar",
+          "max_length": 24,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "drip_schedule",
+      "columns": [
+        {
+          "column_name": "drip_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "candidate_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "template_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "next_run_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "cadence_days",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "status",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "last_sent_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 8
+        }
+      ]
+    },
+    {
+      "table": "emails",
+      "columns": [
+        {
+          "column_name": "message_id",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "to_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 2
+        },
+        {
+          "column_name": "subject",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "body_hash",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "provider",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "sent_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "status",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 7
+        }
+      ]
+    },
+    {
+      "table": "enrichment_contacts",
+      "columns": [
+        {
+          "column_name": "contact_id",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "email",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 2
+        },
+        {
+          "column_name": "first_name",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "last_name",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "company",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "domain",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "linkedin",
+          "data_type": "nvarchar",
+          "max_length": 1024,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "phone_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "source",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 10
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 11
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 12
+        }
+      ]
+    },
+    {
+      "table": "enrichment_jobs",
+      "columns": [
+        {
+          "column_name": "job_id",
+          "data_type": "nvarchar",
+          "max_length": 510,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "provider",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 2
+        },
+        {
+          "column_name": "input_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "status",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "result_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 7
+        }
+      ]
+    },
+    {
+      "table": "findings",
+      "columns": [
+        {
+          "column_name": "audit_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "pain_points_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 2
+        },
+        {
+          "column_name": "opportunities_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "recommendations_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": false,
+          "column_id": 5
+        }
+      ]
+    },
+    {
+      "table": "industries",
+      "columns": [
+        {
+          "column_name": "industry_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "description",
+          "data_type": "nvarchar",
+          "max_length": 2000,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 6
+        }
+      ]
+    },
+    {
+      "table": "interview_responses",
+      "columns": [
+        {
+          "column_name": "response_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "interview_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "question_id",
+          "data_type": "nvarchar",
+          "max_length": 128,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "answer",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": false,
+          "column_id": 5
+        }
+      ]
+    },
+    {
+      "table": "interviews",
+      "columns": [
+        {
+          "column_name": "interview_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "audit_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "persona",
+          "data_type": "nvarchar",
+          "max_length": 240,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "mode",
+          "data_type": "nvarchar",
+          "max_length": 80,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "scheduled_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "status",
+          "data_type": "nvarchar",
+          "max_length": 80,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "notes",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "message_drafts",
+      "columns": [
+        {
+          "column_name": "draft_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "channel",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "subject",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "body_html",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "body_text",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "template_code",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_by_user_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "status",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": false,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "onboarding_task_defaults",
+      "columns": [
+        {
+          "column_name": "task_default_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "status_scope",
+          "data_type": "varchar",
+          "max_length": 20,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "sort_order",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "due_days",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "effective_from_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "effective_to_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "sysname",
+          "max_length": 256,
+          "is_nullable": true,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "onboarding_task_pack",
+      "columns": [
+        {
+          "column_name": "pack_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "pack_code",
+          "data_type": "varchar",
+          "max_length": 64,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "pack_name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "description",
+          "data_type": "nvarchar",
+          "max_length": 1000,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "status_scope",
+          "data_type": "varchar",
+          "max_length": 20,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "effective_from_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "effective_to_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "sysname",
+          "max_length": 256,
+          "is_nullable": true,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "onboarding_task_pack_task",
+      "columns": [
+        {
+          "column_name": "pack_task_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "pack_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "sort_order",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "due_days",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "status_scope",
+          "data_type": "varchar",
+          "max_length": 20,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "effective_from_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "effective_to_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "pack_tasks",
+      "columns": [
+        {
+          "column_name": "pack_task_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "pack_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "sort_order",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "due_days",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "status_scope",
+          "data_type": "nvarchar",
+          "max_length": 40,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "path_steps",
+      "columns": [
+        {
+          "column_name": "step_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "path_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "seq",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 300,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "state_gate",
+          "data_type": "nvarchar",
+          "max_length": 80,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "required",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "agent_key",
+          "data_type": "nvarchar",
+          "max_length": 160,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "input_contract",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "output_contract",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "path_template_versions",
+      "columns": [
+        {
+          "column_name": "version_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "path_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "version",
+          "data_type": "nvarchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "published_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 4
+        }
+      ]
+    },
+    {
+      "table": "path_templates",
+      "columns": [
+        {
+          "column_name": "path_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 240,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "description",
+          "data_type": "nvarchar",
+          "max_length": 800,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "version",
+          "data_type": "nvarchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 6
+        }
+      ]
+    },
+    {
+      "table": "problem_taxonomy",
+      "columns": [
+        {
+          "column_name": "problem_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 240,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "definition",
+          "data_type": "nvarchar",
+          "max_length": 800,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 5
+        }
+      ]
+    },
+    {
+      "table": "process_maps",
+      "columns": [
+        {
+          "column_name": "process_map_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "audit_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "title",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "blob_path",
+          "data_type": "nvarchar",
+          "max_length": 800,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "file_type",
+          "data_type": "nvarchar",
+          "max_length": 80,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "uploaded_utc",
+          "data_type": "datetimeoffset",
+          "max_length": 10,
+          "is_nullable": false,
+          "column_id": 6
+        }
+      ]
+    },
+    {
+      "table": "proposal",
+      "columns": [
+        {
+          "column_name": "proposal_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "pursuit_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "version",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "doc_id",
+          "data_type": "varchar",
+          "max_length": 128,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "status",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "sent_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 8
+        }
+      ]
+    },
+    {
+      "table": "pursuit",
+      "columns": [
+        {
+          "column_name": "pursuit_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "candidate_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "due_date",
+          "data_type": "date",
+          "max_length": 3,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "capture_lead_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "proposal_mgr_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "pursuit_stage",
+          "data_type": "varchar",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "compliance_score",
+          "data_type": "decimal",
+          "max_length": 5,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "forecast_value_usd",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "cos_hours",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": true,
+          "column_id": 10
+        },
+        {
+          "column_name": "cos_amount",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": true,
+          "column_id": 11
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 12
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 13
+        },
+        {
+          "column_name": "row_version",
+          "data_type": "timestamp",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 14
+        }
+      ]
+    },
+    {
+      "table": "pursuit_role_estimate",
+      "columns": [
+        {
+          "column_name": "estimate_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "pursuit_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "role",
+          "data_type": "varchar",
+          "max_length": 64,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "optimistic_hours",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "most_likely_hours",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "pessimistic_hours",
+          "data_type": "decimal",
+          "max_length": 9,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "confidence",
+          "data_type": "decimal",
+          "max_length": 5,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "signal",
+      "columns": [
+        {
+          "column_name": "signal_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "source_type",
+          "data_type": "varchar",
+          "max_length": 16,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "source_ref",
+          "data_type": "varchar",
+          "max_length": 256,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "snippet",
+          "data_type": "nvarchar",
+          "max_length": 2000,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "contact_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "client_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "ts",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 8
+        },
+        {
+          "column_name": "problem_phrase",
+          "data_type": "nvarchar",
+          "max_length": 600,
+          "is_nullable": true,
+          "column_id": 9
+        },
+        {
+          "column_name": "solution_hint",
+          "data_type": "nvarchar",
+          "max_length": 600,
+          "is_nullable": true,
+          "column_id": 10
+        },
+        {
+          "column_name": "urgency_score",
+          "data_type": "decimal",
+          "max_length": 5,
+          "is_nullable": true,
+          "column_id": 11
+        },
+        {
+          "column_name": "dedupe_key",
+          "data_type": "varchar",
+          "max_length": 128,
+          "is_nullable": false,
+          "column_id": 12
+        },
+        {
+          "column_name": "cluster_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 13
+        },
+        {
+          "column_name": "idempotency_key",
+          "data_type": "varchar",
+          "max_length": 64,
+          "is_nullable": true,
+          "column_id": 14
+        },
+        {
+          "column_name": "owner_user_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 15
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 16
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 17
+        },
+        {
+          "column_name": "row_version",
+          "data_type": "timestamp",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 18
+        }
+      ]
+    },
+    {
+      "table": "signal_cluster",
+      "columns": [
+        {
+          "column_name": "cluster_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "algo",
+          "data_type": "varchar",
+          "max_length": 32,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "params_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 5
+        }
+      ]
+    },
+    {
+      "table": "sla_breach",
+      "columns": [
+        {
+          "column_name": "breach_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "item_type",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "item_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "rule_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "breached_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "reason_code",
+          "data_type": "varchar",
+          "max_length": 32,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "resolved_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 8
+        }
+      ]
+    },
+    {
+      "table": "sla_rule",
+      "columns": [
+        {
+          "column_name": "rule_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "item_type",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "stage",
+          "data_type": "varchar",
+          "max_length": 16,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "metric",
+          "data_type": "varchar",
+          "max_length": 24,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "threshold_hrs",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "active_from",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "active_to",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 9
+        }
+      ]
+    },
+    {
+      "table": "solution_catalog",
+      "columns": [
+        {
+          "column_name": "solution_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "name",
+          "data_type": "nvarchar",
+          "max_length": 240,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "playbook_ref",
+          "data_type": "nvarchar",
+          "max_length": 512,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 5
+        }
+      ]
+    },
+    {
+      "table": "task_packs",
+      "columns": [
+        {
+          "column_name": "pack_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "pack_code",
+          "data_type": "nvarchar",
+          "max_length": 100,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "pack_name",
+          "data_type": "nvarchar",
+          "max_length": 400,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "description",
+          "data_type": "nvarchar",
+          "max_length": 2000,
+          "is_nullable": true,
+          "column_id": 4
+        },
+        {
+          "column_name": "status_scope",
+          "data_type": "nvarchar",
+          "max_length": 40,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "bit",
+          "max_length": 1,
+          "is_nullable": false,
+          "column_id": 6
+        },
+        {
+          "column_name": "effective_from_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "effective_to_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 8
+        },
+        {
+          "column_name": "created_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": false,
+          "column_id": 9
+        },
+        {
+          "column_name": "updated_utc",
+          "data_type": "datetime2",
+          "max_length": 7,
+          "is_nullable": true,
+          "column_id": 10
+        }
+      ]
+    },
+    {
+      "table": "work_event",
+      "columns": [
+        {
+          "column_name": "event_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "item_type",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": false,
+          "column_id": 3
+        },
+        {
+          "column_name": "item_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "event_name",
+          "data_type": "varchar",
+          "max_length": 40,
+          "is_nullable": false,
+          "column_id": 5
+        },
+        {
+          "column_name": "payload_json",
+          "data_type": "nvarchar",
+          "max_length": -1,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "happened_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 7
+        },
+        {
+          "column_name": "actor_user_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": true,
+          "column_id": 8
+        }
+      ]
+    },
+    {
+      "table": "work_item_link",
+      "columns": [
+        {
+          "column_name": "link_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 1
+        },
+        {
+          "column_name": "org_id",
+          "data_type": "int",
+          "max_length": 4,
+          "is_nullable": false,
+          "column_id": 2
+        },
+        {
+          "column_name": "item_type",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": true,
+          "column_id": 3
+        },
+        {
+          "column_name": "item_id",
+          "data_type": "bigint",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 4
+        },
+        {
+          "column_name": "link_type",
+          "data_type": "varchar",
+          "max_length": 12,
+          "is_nullable": true,
+          "column_id": 5
+        },
+        {
+          "column_name": "target_type",
+          "data_type": "varchar",
+          "max_length": 24,
+          "is_nullable": true,
+          "column_id": 6
+        },
+        {
+          "column_name": "target_ref",
+          "data_type": "varchar",
+          "max_length": 256,
+          "is_nullable": true,
+          "column_id": 7
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "datetime2",
+          "max_length": 8,
+          "is_nullable": false,
+          "column_id": 8
+        }
+      ]
+    }
+  ],
+  "views": [
+    {
+      "view_name": "v_audit_recent_touch"
+    },
+    {
+      "view_name": "v_dashboard_stats"
+    },
+    {
+      "view_name": "vw_clients_kpis"
+    },
+    {
+      "view_name": "vw_clients_overview"
+    }
+  ],
+  "procs": [
+    {
+      "proc_name": "sp_audit_advance_to_step"
+    },
+    {
+      "proc_name": "sp_audit_create"
+    },
+    {
+      "proc_name": "sp_audit_get"
+    },
+    {
+      "proc_name": "sp_audit_list_by_engagement"
+    },
+    {
+      "proc_name": "sp_audit_mark_step_done_and_advance"
+    },
+    {
+      "proc_name": "sp_audit_percent_recalc"
+    },
+    {
+      "proc_name": "sp_audit_progress_upsert"
+    },
+    {
+      "proc_name": "sp_audit_set_path_initialize"
+    },
+    {
+      "proc_name": "sp_create_client"
+    },
+    {
+      "proc_name": "sp_path_steps_reorder"
+    },
+    {
+      "proc_name": "sp_path_template_clone"
+    },
+    {
+      "proc_name": "sp_path_template_publish"
+    },
+    {
+      "proc_name": "sp_path_template_usage"
+    },
+    {
+      "proc_name": "usp_audit_last_recent"
+    },
+    {
+      "proc_name": "usp_dashboard_stats"
+    },
+    {
+      "proc_name": "usp_recent_activity"
+    },
+    {
+      "proc_name": "usp_sipoc_get"
+    },
+    {
+      "proc_name": "usp_sipoc_upsert"
+    }
+  ],
+  "sp_create_client_params": [
+    {
+      "parameter_name": "@Name",
+      "data_type": "nvarchar",
+      "max_length": 400,
+      "is_nullable": true,
+      "parameter_id": 1,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@IsActive",
+      "data_type": "bit",
+      "max_length": 1,
+      "is_nullable": true,
+      "parameter_id": 2,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@PackCode",
+      "data_type": "varchar",
+      "max_length": 64,
+      "is_nullable": true,
+      "parameter_id": 3,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@LogoUrl",
+      "data_type": "nvarchar",
+      "max_length": 1024,
+      "is_nullable": true,
+      "parameter_id": 4,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@ContactsJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 5,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@DocumentsJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 6,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@IndustriesJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 7,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@IntegrationsJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 8,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@LocationsJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 9,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@NotesJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 10,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@EngagementTagsJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 11,
+      "default_value": null
+    },
+    {
+      "parameter_name": "@ContactSocialProfilesJson",
+      "data_type": "nvarchar",
+      "max_length": -1,
+      "is_nullable": true,
+      "parameter_id": 12,
+      "default_value": null
+    }
+  ]
+}
