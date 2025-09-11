@@ -3,6 +3,7 @@ import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { PursuitCreateBody, PursuitUpdateBody } from '../validation/schemas';
 import { logActivity } from '../utils/activity';
+import { pursuitMemory } from '../utils/memory';
 
 const router = Router();
 
@@ -171,6 +172,10 @@ router.post(
     `);
     const created = result.recordset[0];
     await logActivity({ type: 'PursuitCreated', title: `Pursuit ${created.pursuit_id} created`, client_id: null, signal_id: created.pursuit_id }); // Adjust
+    
+    // Create memory atom for pursuit creation
+    await pursuitMemory.created(data.org_id, created.pursuit_id, data.candidate_id, data.pursuit_stage);
+    
     ok(res, created, 201);
   })
 );

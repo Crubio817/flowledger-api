@@ -3,6 +3,7 @@ import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { CandidateCreateBody, CandidateUpdateBody } from '../validation/schemas';
 import { logActivity } from '../utils/activity';
+import { candidateMemory } from '../utils/memory';
 
 const router = Router();
 
@@ -170,6 +171,10 @@ router.post(
     `);
     const created = result.recordset[0];
     await logActivity({ type: 'CandidateCreated', title: `Candidate ${created.candidate_id} created`, client_id: created.client_id, signal_id: created.candidate_id }); // Note: using signal_id for candidate
+    
+    // Capture memory atom for candidate creation
+    await candidateMemory.created(created.org_id, created.candidate_id, created.title || 'New Candidate');
+    
     ok(res, created, 201);
   })
 );
@@ -185,6 +190,12 @@ router.put(
     const sets: string[] = [];
     const pool = await getPool();
     const request = pool.request().input('id', sql.BigInt, candidateId);
+    
+    // Get current candidate to detect status changes
+    const currentResult = await pool.request().input('id', sql.BigInt, candidateId)
+      .query(`SELECT candidate_id, org_id, status FROM app.candidate WHERE candidate_id = @id`);
+    if (currentResult.recordset.length === 0) return notFound(res);
+    const currentCandidate = currentResult.recordset[0];
     if (data.client_id !== undefined) { sets.push('client_id = @client_id'); request.input('client_id', sql.Int, data.client_id); }
     if (data.contact_id !== undefined) { sets.push('contact_id = @contact_id'); request.input('contact_id', sql.Int, data.contact_id); }
     if (data.problem_id !== undefined) { sets.push('problem_id = @problem_id'); request.input('problem_id', sql.Int, data.problem_id); }
@@ -204,6 +215,12 @@ router.put(
     const read = await pool.request().input('id', sql.BigInt, candidateId).query(`SELECT candidate_id, org_id, client_id, contact_id, problem_id, solution_id, title, one_liner_scope, confidence, value_band, next_step, status, owner_user_id, last_touch_at, created_at, updated_at FROM app.candidate WHERE candidate_id = @id`);
     const updated = read.recordset[0];
     await logActivity({ type: 'CandidateUpdated', title: `Candidate ${candidateId} updated`, client_id: updated.client_id, signal_id: candidateId });
+    
+    // Capture memory atom for status changes
+    if (data.status !== undefined && data.status !== currentCandidate.status) {
+      await candidateMemory.statusChanged(updated.org_id, candidateId, currentCandidate.status, data.status);
+    }
+    
     ok(res, updated);
   })
 );

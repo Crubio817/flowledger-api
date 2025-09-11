@@ -20,31 +20,38 @@ BEGIN
   IF @engagement_id IS NULL AND @client_id IS NOT NULL
   BEGIN
     SELECT TOP 1 @engagement_id = engagement_id
-    FROM app.client_engagements
-    WHERE client_id = @client_id
-    ORDER BY created_utc DESC;
+    FROM app.engagement
+    WHERE client_id = @client_id AND type = 'audit'
+    ORDER BY created_at DESC;
   END
 
   -- If audit_id is NULL, create new audit
   IF @audit_id IS NULL
   BEGIN
-    INSERT INTO app.audits (engagement_id, title, phase, percent_complete, created_utc, updated_utc, state, domain, audit_type, path_id, current_step_id, owner_contact_id)
-    VALUES (@engagement_id, @title, 'InProgress', 0, SYSUTCDATETIME(), SYSUTCDATETIME(), 'not_started', @domain, 'standard', @path_id, NULL, @owner_contact_id);
+    INSERT INTO app.engagement (org_id, client_id, type, name, owner_id, status, health, start_at, due_at, created_at, updated_at)
+    VALUES (1, @client_id, 'audit', @title, @owner_contact_id, 'active', 'green', SYSUTCDATETIME(), DATEADD(day, 30, SYSUTCDATETIME()), SYSUTCDATETIME(), SYSUTCDATETIME());
 
     SET @new_audit_id = SCOPE_IDENTITY();
     SET @audit_id = @new_audit_id;
+
+    -- Create audit path record
+    INSERT INTO app.audit_path (org_id, engagement_id, name, created_at)
+    VALUES (1, @new_audit_id, @title + ' Path', SYSUTCDATETIME());
   END
   ELSE
   BEGIN
     -- Update existing audit with path
-    UPDATE app.audits
-    SET path_id = @path_id,
-        current_step_id = NULL,
-        state = 'not_started',
-        phase = 'InProgress',
-        percent_complete = 0,
-        updated_utc = SYSUTCDATETIME()
-    WHERE audit_id = @audit_id;
+    UPDATE app.engagement
+    SET status = 'active',
+        updated_at = SYSUTCDATETIME()
+    WHERE engagement_id = @audit_id AND type = 'audit';
+
+    -- Ensure audit path exists
+    IF NOT EXISTS (SELECT 1 FROM app.audit_path WHERE engagement_id = @audit_id)
+    BEGIN
+      INSERT INTO app.audit_path (org_id, engagement_id, name, created_at)
+      VALUES (1, @audit_id, @title + ' Path', SYSUTCDATETIME());
+    END
   END
 
   -- Delete existing progress for this audit
@@ -56,10 +63,13 @@ BEGIN
   WHERE path_id = @path_id
   ORDER BY seq;
 
-  -- Update current_step_id to first step
-  UPDATE app.audits
-  SET current_step_id = @first_step_id
-  WHERE audit_id = @audit_id;
+  -- Create audit steps for this engagement
+  INSERT INTO app.audit_step (org_id, audit_path_id, title, owner_id, state, severity, due_at, created_at, updated_at)
+  SELECT 1, ap.audit_path_id, ps.title, @owner_contact_id, 'todo', 'med',
+         DATEADD(day, ps.seq * 7, SYSUTCDATETIME()), SYSUTCDATETIME(), SYSUTCDATETIME()
+  FROM app.path_steps ps
+  CROSS JOIN (SELECT audit_path_id FROM app.audit_path WHERE engagement_id = @audit_id) ap
+  WHERE ps.path_id = @path_id;
 
   -- Insert progress rows for all steps
   INSERT INTO app.audit_step_progress (audit_id, step_id, status, started_utc, created_utc, updated_utc)
@@ -71,11 +81,12 @@ BEGIN
   WHERE ps.path_id = @path_id;
 
   -- Return audit header
-  SELECT a.audit_id, a.engagement_id, a.title, a.phase, a.percent_complete, a.created_utc, a.updated_utc,
-         a.state, a.domain, a.audit_type, a.path_id, a.current_step_id, a.start_utc, a.end_utc,
-         a.owner_contact_id, a.notes
-  FROM app.audits a
-  WHERE a.audit_id = @audit_id;
+  SELECT e.engagement_id as audit_id, e.client_id, e.name as title, e.status, e.health,
+         e.created_at as created_utc, e.updated_at as updated_utc,
+         e.start_at as start_utc, e.due_at as end_utc,
+         e.owner_id as owner_contact_id
+  FROM app.engagement e
+  WHERE e.engagement_id = @audit_id AND e.type = 'audit';
 
   -- Return step list with progress
   SELECT ps.step_id, ps.path_id, ps.seq, ps.title, ps.state_gate, ps.required, ps.agent_key,

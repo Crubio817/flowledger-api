@@ -13,7 +13,7 @@ async function getAuditColumns(): Promise<Set<string>> {
   const pool = await getPool();
   const r = await pool.request()
     .input('schema', sql.NVarChar(128), 'app')
-    .input('table', sql.NVarChar(128), 'audits')
+    .input('table', sql.NVarChar(128), 'engagement')
     .query(`SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = @schema AND table_name = @table`);
   return new Set(r.recordset.map((r: any) => (r.COLUMN_NAME || r.column_name)));
 }
@@ -55,7 +55,7 @@ function normalizeAuditRow(row: any) {
 async function engagementExists(engagementId: number) {
   const pool = await getPool();
   const r = await pool.request().input('id', sql.Int, engagementId).query(
-    `SELECT engagement_id FROM app.client_engagements WHERE engagement_id = @id`
+    `SELECT engagement_id FROM app.engagement WHERE engagement_id = @id`
   );
   return r.recordset.length > 0;
 }
@@ -132,29 +132,14 @@ router.get(
         return;
       } catch {
         // Stored proc may not exist; fall through to WHERE-based query below
-        const cols = await getAuditColumns();
-        const select = [
-          colOrNull(cols, 'audit_id'),
-          colOrNull(cols, 'engagement_id'),
-          colOrNull(cols, 'client_id'),
-          colOrNull(cols, 'title'),
-          colOrNull(cols, 'scope'),
-          colOrNull(cols, 'status'),
-          colOrNull(cols, 'percent_complete'),
-          colOrNull(cols, 'state'),
-          colOrNull(cols, 'domain'),
-          colOrNull(cols, 'audit_type'),
-          colOrNull(cols, 'path_id'),
-          colOrNull(cols, 'current_step_id'),
-          colOrNull(cols, 'start_utc'),
-          colOrNull(cols, 'end_utc'),
-          colOrNull(cols, 'owner_contact_id'),
-          colOrNull(cols, 'notes'),
-          colOrNull(cols, 'created_utc'),
-          colOrNull(cols, 'updated_utc')
-        ].join(', ');
-        const order = cols.has('audit_id') ? 'audit_id' : (cols.has('created_utc') ? 'created_utc' : '1');
-        const result = await pool.request().input('client_id', sql.Int, clientId).input('offset', sql.Int, offset).input('limit', sql.Int, limit).query(`SELECT ${select} FROM app.audits WHERE client_id = @client_id ORDER BY ${order} OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
+        const result = await pool.request()
+          .input('client_id', sql.Int, clientId)
+          .input('offset', sql.Int, offset)
+          .input('limit', sql.Int, limit)
+          .query(`SELECT engagement_id as audit_id, client_id, title, scope, status, state, percent_complete, domain, audit_type, path_id, current_step_id, start_utc, end_utc, owner_contact_id, notes, created_utc, updated_utc
+                  FROM app.engagement
+                  WHERE client_id = @client_id AND engagement_type = 'audit'
+                  ORDER BY created_utc DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
         const rows = (result.recordset || []).map(normalizeAuditRow);
         listOk(res, rows, { page, limit });
         return;
@@ -162,42 +147,23 @@ router.get(
     }
     if (engagementId && Number.isInteger(engagementId) && engagementId > 0) {
       // Call stored procedure that returns audits for an engagement
-  const sp = await pool.request().input('engagement_id', sql.Int, engagementId).input('offset', sql.Int, offset).input('limit', sql.Int, limit).execute('app.sp_audit_list_by_engagement');
-  const rows = (sp.recordset || []).map(normalizeAuditRow);
-  listOk(res, rows, { page, limit });
+      const sp = await pool.request().input('engagement_id', sql.Int, engagementId).input('offset', sql.Int, offset).input('limit', sql.Int, limit).execute('app.sp_audit_list_by_engagement');
+      const rows = (sp.recordset || []).map(normalizeAuditRow);
+      listOk(res, rows, { page, limit });
       return;
     }
 
     // Fallback: return paginated audits from table (schema-aware)
-    const cols = await getAuditColumns();
-    const select = [
-      colOrNull(cols, 'audit_id'),
-  colOrNull(cols, 'engagement_id'),
-      colOrNull(cols, 'client_id'),
-      colOrNull(cols, 'title'),
-      colOrNull(cols, 'scope'),
-      colOrNull(cols, 'status'),
-  colOrNull(cols, 'percent_complete'),
-      colOrNull(cols, 'state'),
-      colOrNull(cols, 'domain'),
-      colOrNull(cols, 'audit_type'),
-      colOrNull(cols, 'path_id'),
-      colOrNull(cols, 'current_step_id'),
-      colOrNull(cols, 'start_utc'),
-      colOrNull(cols, 'end_utc'),
-      colOrNull(cols, 'owner_contact_id'),
-      colOrNull(cols, 'notes'),
-      colOrNull(cols, 'created_utc'),
-      colOrNull(cols, 'updated_utc')
-    ].join(', ');
-
     const result = await pool
       .request()
       .input('offset', sql.Int, offset)
       .input('limit', sql.Int, limit)
-      .query(`SELECT ${select} FROM app.audits ORDER BY ${cols.has('audit_id') ? 'audit_id' : (cols.has('created_utc') ? 'created_utc' : '1')} OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
-  const rows = (result.recordset || []).map(normalizeAuditRow);
-  listOk(res, rows, { page, limit });
+      .query(`SELECT engagement_id as audit_id, client_id, title, scope, status, state, percent_complete, domain, audit_type, path_id, current_step_id, start_utc, end_utc, owner_contact_id, notes, created_utc, updated_utc
+              FROM app.engagement
+              WHERE engagement_type = 'audit'
+              ORDER BY created_utc DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`);
+    const rows = (result.recordset || []).map(normalizeAuditRow);
+    listOk(res, rows, { page, limit });
   })
 );
 
@@ -282,28 +248,7 @@ router.get(
       return;
     } catch (e) {
       // If stored proc not found or fails, fall back to direct select
-      const cols = await getAuditColumns();
-      const select = [
-        colOrNull(cols, 'audit_id'),
-  colOrNull(cols, 'engagement_id'),
-        colOrNull(cols, 'client_id'),
-        colOrNull(cols, 'title'),
-        colOrNull(cols, 'scope'),
-        colOrNull(cols, 'status'),
-  colOrNull(cols, 'percent_complete'),
-        colOrNull(cols, 'state'),
-        colOrNull(cols, 'domain'),
-        colOrNull(cols, 'audit_type'),
-        colOrNull(cols, 'path_id'),
-        colOrNull(cols, 'current_step_id'),
-        colOrNull(cols, 'start_utc'),
-        colOrNull(cols, 'end_utc'),
-        colOrNull(cols, 'owner_contact_id'),
-        colOrNull(cols, 'notes'),
-        colOrNull(cols, 'created_utc'),
-        colOrNull(cols, 'updated_utc')
-      ].join(', ');
-      const result = await pool.request().input('id', sql.BigInt, auditId).query(`SELECT ${select} FROM app.audits WHERE ${cols.has('audit_id') ? 'audit_id = @id' : '1=0'}`);
+      const result = await pool.request().input('id', sql.BigInt, auditId).query(`SELECT engagement_id as audit_id, client_id, title, scope, status, state, percent_complete, domain, audit_type, path_id, current_step_id, start_utc, end_utc, owner_contact_id, notes, created_utc, updated_utc FROM app.engagement WHERE engagement_id = @id AND engagement_type = 'audit'`);
       const row = result.recordset[0];
       if (!row) return notFound(res);
       ok(res, { header: normalizeAuditRow(row), steps: [] });
@@ -365,14 +310,25 @@ router.post(
           try {
             const rs = await pool.request()
               .input('aid', sql.BigInt, header.audit_id)
-              .query(`SELECT ps.step_id, ps.path_id, ps.seq, ps.title, ps.state_gate, ps.required, ps.agent_key,
-                             ps.input_contract, ps.output_contract, ps.created_utc,
-                             asp.status, asp.started_utc, asp.completed_utc, asp.output_json, asp.notes,
-                             asp.created_utc AS progress_created_utc, asp.updated_utc AS progress_updated_utc
-                      FROM app.path_steps ps
-                      LEFT JOIN app.audit_step_progress asp ON asp.step_id = ps.step_id AND asp.audit_id = @aid
-                      WHERE ps.path_id = ${pathId}
-                      ORDER BY ps.seq`);
+              .query(`SELECT
+                             ast.audit_step_id as step_id,
+                             ap.audit_path_id as path_id,
+                             ROW_NUMBER() OVER (ORDER BY ast.audit_step_id) as seq,
+                             ast.title,
+                             'todo' as state_gate, -- Default state gate
+                             0 as required, -- Default required
+                             ast.state as status,
+                             NULL as started_utc,
+                             CASE WHEN ast.state = 'done' THEN ast.updated_at ELSE NULL END as completed_utc,
+                             NULL as output_json,
+                             ast.desc as notes,
+                             ast.created_at,
+                             ast.created_at AS progress_created_utc,
+                             ast.updated_at AS progress_updated_utc
+                      FROM app.audit_step ast
+                      INNER JOIN app.audit_path ap ON ap.audit_path_id = ast.audit_path_id
+                      WHERE ap.engagement_id = @aid
+                      ORDER BY ast.audit_step_id`);
             steps = rs.recordset || [];
           } catch {}
         }
@@ -387,7 +343,6 @@ router.post(
     }
 
     // No path_id: plain INSERT
-    const cols = await getAuditColumns();
     const title = data.title;
     const scope = data.scope ?? null;
     const status = data.status ?? null;
@@ -399,30 +354,27 @@ router.post(
     const end_utc = data.end_utc ?? null;
     const notes = data.notes ?? null;
 
-    const insertCols: string[] = [];
-    const insertVals: string[] = [];
-    const request = pool.request();
-    // Ensure engagement_id is included in INSERT when available (table requires it)
-    if (cols.has('engagement_id')) { insertCols.push('engagement_id'); insertVals.push('@engagement_id'); request.input('engagement_id', sql.BigInt, engagementId ?? null); }
+    const insertCols: string[] = ['engagement_type', 'client_id', 'title'];
+    const insertVals: string[] = ['@engagement_type', '@client_id', '@title'];
+    const request = pool.request()
+      .input('engagement_type', sql.NVarChar(20), 'audit')
+      .input('client_id', sql.Int, (data as any).client_id)
+      .input('title', sql.NVarChar(200), title);
 
-    if (cols.has('title')) { insertCols.push('title'); insertVals.push('@title'); request.input('title', sql.NVarChar(200), title); }
-    if (cols.has('scope')) { insertCols.push('scope'); insertVals.push('@scope'); request.input('scope', sql.NVarChar(1000), scope); }
-    if (cols.has('phase')) { insertCols.push('phase'); insertVals.push('COALESCE(@status, N\'InProgress\')'); request.input('status', sql.NVarChar(40), status); }
-    if (cols.has('state')) { insertCols.push('state'); insertVals.push('@state'); request.input('state', sql.NVarChar(30), state); }
-    if (cols.has('domain')) { insertCols.push('domain'); insertVals.push('@domain'); request.input('domain', sql.NVarChar(50), domain); }
-    if (cols.has('audit_type')) { insertCols.push('audit_type'); insertVals.push('@audit_type'); request.input('audit_type', sql.NVarChar(80), audit_type); }
-    if (cols.has('current_step_id')) { insertCols.push('current_step_id'); insertVals.push('@current_step_id'); request.input('current_step_id', sql.Int, current_step_id); }
-    if (cols.has('start_utc')) { insertCols.push('start_utc'); insertVals.push('@start_utc'); request.input('start_utc', sql.DateTime2, start_utc); }
-    if (cols.has('end_utc')) { insertCols.push('end_utc'); insertVals.push('@end_utc'); request.input('end_utc', sql.DateTime2, end_utc); }
-    if (cols.has('owner_contact_id')) { insertCols.push('owner_contact_id'); insertVals.push('@owner_contact_id'); request.input('owner_contact_id', sql.Int, ownerContactId); }
-    if (cols.has('notes')) { insertCols.push('notes'); insertVals.push('@notes'); request.input('notes', sql.NVarChar(sql.MAX), notes); }
+    if (scope !== null) { insertCols.push('scope'); insertVals.push('@scope'); request.input('scope', sql.NVarChar(1000), scope); }
+    if (status !== null) { insertCols.push('status'); insertVals.push('@status'); request.input('status', sql.NVarChar(40), status); }
+    if (state !== null) { insertCols.push('state'); insertVals.push('@state'); request.input('state', sql.NVarChar(30), state); }
+    if (domain !== null) { insertCols.push('domain'); insertVals.push('@domain'); request.input('domain', sql.NVarChar(50), domain); }
+    if (audit_type !== null) { insertCols.push('audit_type'); insertVals.push('@audit_type'); request.input('audit_type', sql.NVarChar(80), audit_type); }
+    if (current_step_id !== null) { insertCols.push('current_step_id'); insertVals.push('@current_step_id'); request.input('current_step_id', sql.Int, current_step_id); }
+    if (start_utc !== null) { insertCols.push('start_utc'); insertVals.push('@start_utc'); request.input('start_utc', sql.DateTime2, start_utc); }
+    if (end_utc !== null) { insertCols.push('end_utc'); insertVals.push('@end_utc'); request.input('end_utc', sql.DateTime2, end_utc); }
+    if (ownerContactId !== null) { insertCols.push('owner_contact_id'); insertVals.push('@owner_contact_id'); request.input('owner_contact_id', sql.Int, ownerContactId); }
+    if (notes !== null) { insertCols.push('notes'); insertVals.push('@notes'); request.input('notes', sql.NVarChar(sql.MAX), notes); }
+    if (pathId !== null) { insertCols.push('path_id'); insertVals.push('@path_id'); request.input('path_id', sql.Int, pathId); }
 
-    await request.query(`INSERT INTO app.audits (${insertCols.join(',')}) VALUES (${insertVals.join(',')})`);
-    const read = await pool.request().query(`SELECT ${[
-      colOrNull(cols,'audit_id'), colOrNull(cols,'engagement_id'),
-      colOrNull(cols,'title'), colOrNull(cols,'scope'), colOrNull(cols,'phase'), colOrNull(cols,'percent_complete'), colOrNull(cols,'state'), colOrNull(cols,'domain'), colOrNull(cols,'audit_type'), colOrNull(cols,'path_id'), colOrNull(cols,'current_step_id'), colOrNull(cols,'start_utc'), colOrNull(cols,'end_utc'), colOrNull(cols,'owner_contact_id'), colOrNull(cols,'notes'),
-      colOrNull(cols,'created_utc'), colOrNull(cols,'updated_utc')
-    ].join(', ')} FROM app.audits WHERE audit_id = SCOPE_IDENTITY()`);
+    await request.query(`INSERT INTO app.engagement (${insertCols.join(',')}) VALUES (${insertVals.join(',')})`);
+    const read = await pool.request().query(`SELECT engagement_id as audit_id, client_id, title, scope, status, state, percent_complete, domain, audit_type, path_id, current_step_id, start_utc, end_utc, owner_contact_id, notes, created_utc, updated_utc FROM app.engagement WHERE engagement_id = SCOPE_IDENTITY()`);
     const created = read.recordset[0];
     normalizeAuditRow(created);
     if (created && created.audit_id) res.setHeader('Location', `/audits/${created.audit_id}`);
@@ -539,29 +491,24 @@ router.put(
     const data = parsed.data;
   const sets: string[] = [];
   const pool = await getPool();
-  const cols = await getAuditColumns();
   const request = pool.request().input('id', sql.Int, auditId);
-  if (data.title !== undefined && cols.has('title')) { sets.push('title = @title'); request.input('title', sql.NVarChar(200), data.title); }
-  if (data.scope !== undefined && cols.has('scope')) { sets.push('scope = @scope'); request.input('scope', sql.NVarChar(1000), data.scope); }
-  if (data.status !== undefined && cols.has('phase')) { sets.push('phase = @status'); request.input('status', sql.NVarChar(40), data.status); }
-  if (data.state !== undefined && cols.has('state')) { sets.push('state = @state'); request.input('state', sql.NVarChar(30), data.state); }
-  if (data.domain !== undefined && cols.has('domain')) { sets.push('domain = @domain'); request.input('domain', sql.NVarChar(50), data.domain); }
-  if (data.audit_type !== undefined && cols.has('audit_type')) { sets.push('audit_type = @audit_type'); request.input('audit_type', sql.NVarChar(80), data.audit_type); }
-  if (data.path_id !== undefined && cols.has('path_id')) { sets.push('path_id = @path_id'); request.input('path_id', sql.Int, data.path_id); }
-  if (data.current_step_id !== undefined && cols.has('current_step_id')) { sets.push('current_step_id = @current_step_id'); request.input('current_step_id', sql.Int, data.current_step_id); }
-  if (data.start_utc !== undefined && cols.has('start_utc')) { sets.push('start_utc = @start_utc'); request.input('start_utc', sql.DateTime2, data.start_utc); }
-  if (data.end_utc !== undefined && cols.has('end_utc')) { sets.push('end_utc = @end_utc'); request.input('end_utc', sql.DateTime2, data.end_utc); }
-  if (data.owner_contact_id !== undefined && cols.has('owner_contact_id')) { sets.push('owner_contact_id = @owner_contact_id'); request.input('owner_contact_id', sql.Int, data.owner_contact_id); }
-  if (data.notes !== undefined && cols.has('notes')) { sets.push('notes = @notes'); request.input('notes', sql.NVarChar(sql.MAX), data.notes); }
+  if (data.title !== undefined) { sets.push('title = @title'); request.input('title', sql.NVarChar(200), data.title); }
+  if (data.scope !== undefined) { sets.push('scope = @scope'); request.input('scope', sql.NVarChar(1000), data.scope); }
+  if (data.status !== undefined) { sets.push('status = @status'); request.input('status', sql.NVarChar(40), data.status); }
+  if (data.state !== undefined) { sets.push('state = @state'); request.input('state', sql.NVarChar(30), data.state); }
+  if (data.domain !== undefined) { sets.push('domain = @domain'); request.input('domain', sql.NVarChar(50), data.domain); }
+  if (data.audit_type !== undefined) { sets.push('audit_type = @audit_type'); request.input('audit_type', sql.NVarChar(80), data.audit_type); }
+  if (data.path_id !== undefined) { sets.push('path_id = @path_id'); request.input('path_id', sql.Int, data.path_id); }
+  if (data.current_step_id !== undefined) { sets.push('current_step_id = @current_step_id'); request.input('current_step_id', sql.Int, data.current_step_id); }
+  if (data.start_utc !== undefined) { sets.push('start_utc = @start_utc'); request.input('start_utc', sql.DateTime2, data.start_utc); }
+  if (data.end_utc !== undefined) { sets.push('end_utc = @end_utc'); request.input('end_utc', sql.DateTime2, data.end_utc); }
+  if (data.owner_contact_id !== undefined) { sets.push('owner_contact_id = @owner_contact_id'); request.input('owner_contact_id', sql.Int, data.owner_contact_id); }
+  if (data.notes !== undefined) { sets.push('notes = @notes'); request.input('notes', sql.NVarChar(sql.MAX), data.notes); }
     if (!sets.length) return badRequest(res, 'No fields to update');
     sets.push('updated_utc = SYSUTCDATETIME()');
-    const result = await request.query(`UPDATE app.audits SET ${sets.join(', ')} WHERE audit_id = @id`);
+    const result = await request.query(`UPDATE app.engagement SET ${sets.join(', ')} WHERE engagement_id = @id AND engagement_type = 'audit'`);
     if (result.rowsAffected[0] === 0) return notFound(res);
-    const read = await pool.request().input('id', sql.Int, auditId).query(`SELECT ${[
-      colOrNull(cols,'audit_id'), colOrNull(cols,'engagement_id'), colOrNull(cols,'client_id'),
-      colOrNull(cols,'title'), colOrNull(cols,'scope'), colOrNull(cols,'status'), colOrNull(cols,'percent_complete'), colOrNull(cols,'state'), colOrNull(cols,'domain'), colOrNull(cols,'audit_type'), colOrNull(cols,'path_id'), colOrNull(cols,'current_step_id'), colOrNull(cols,'start_utc'), colOrNull(cols,'end_utc'), colOrNull(cols,'owner_contact_id'), colOrNull(cols,'notes'),
-      colOrNull(cols,'created_utc'), colOrNull(cols,'updated_utc')
-    ].join(', ')} FROM app.audits WHERE ${cols.has('audit_id') ? 'audit_id = @id' : '1=0'}`);
+    const read = await pool.request().input('id', sql.Int, auditId).query(`SELECT engagement_id as audit_id, client_id, title, scope, status, state, percent_complete, domain, audit_type, path_id, current_step_id, start_utc, end_utc, owner_contact_id, notes, created_utc, updated_utc FROM app.engagement WHERE engagement_id = @id AND engagement_type = 'audit'`);
     const updated = read.recordset[0];
     normalizeAuditRow(updated);
     await logActivity({ type: 'AuditUpdated', title: `Audit ${auditId} updated`, audit_id: auditId, client_id: updated.client_id });
@@ -577,7 +524,7 @@ router.delete(
     const pool = await getPool();
     try {
       const result = await pool.request().input('id', sql.Int, auditId).query(
-        `DELETE FROM app.audits WHERE audit_id = @id`
+        `DELETE FROM app.engagement WHERE engagement_id = @id AND engagement_type = 'audit'`
       );
   if (result.rowsAffected[0] === 0) return notFound(res);
   await logActivity({ type: 'AuditDeleted', title: `Audit ${auditId} deleted`, audit_id: auditId });

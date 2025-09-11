@@ -383,7 +383,9 @@ BEGIN
 END
 
 -- 3) Seed action catalog
-INSERT INTO app.automation_action_catalog (action_type, config_schema, permissions_required, description) VALUES
+INSERT INTO app.automation_action_catalog (action_type, config_schema, permissions_required, description)
+SELECT action_type, config_schema, permissions_required, description
+FROM (VALUES
 ('comms.draft_reply', '{"type":"object","properties":{"template":{"type":"string"},"thread_from":{"type":"string"},"engagement_id":{"type":"number"}}}', '["comms.write"]', 'Draft a reply in a communication thread'),
 ('comms.send_email', '{"type":"object","properties":{"to":{"type":"string"},"subject":{"type":"string"},"body":{"type":"string"},"template":{"type":"string"}}}', '["comms.send"]', 'Send an email message'),
 ('comms.set_status', '{"type":"object","properties":{"thread_id":{"type":"string"},"status":{"type":"string","enum":["waiting_on_us","waiting_on_client","resolved"]}}}', '["comms.write"]', 'Update thread status'),
@@ -405,6 +407,11 @@ INSERT INTO app.automation_action_catalog (action_type, config_schema, permissio
 ('people.create_assignment', '{"type":"object","properties":{"request_id":{"type":"number"},"candidate_id":{"type":"number"},"start_date":{"type":"string"}}}', '["people.write"]', 'Create resource assignment'),
 ('automation.schedule_followup', '{"type":"object","properties":{"delay_minutes":{"type":"number"},"action":{"type":"object"}}}', '["automation.write"]', 'Schedule a followup action'),
 ('automation.emit_event', '{"type":"object","properties":{"event_type":{"type":"string"},"payload":{"type":"object"}}}', '["automation.write"]', 'Emit a custom event'),
-('automation.call_webhook', '{"type":"object","properties":{"url":{"type":"string"},"method":{"type":"string"},"headers":{"type":"object"},"body":{"type":"object"}}}', '["automation.call"]', 'Call external webhook');
+('automation.call_webhook', '{"type":"object","properties":{"url":{"type":"string"},"method":{"type":"string"},"headers":{"type":"object"},"body":{"type":"object"}}}', '["automation.call"]', 'Call external webhook')
+) AS v(action_type, config_schema, permissions_required, description)
+WHERE NOT EXISTS (
+    SELECT 1 FROM app.automation_action_catalog aac
+    WHERE aac.action_type = v.action_type
+);
 
 PRINT 'Automation module tables created successfully';

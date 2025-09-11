@@ -97,6 +97,14 @@ This package contains all the essential files needed for your front end develope
 
 📖 **Detailed Implementation Guide**: See `BILLING_MODULE_GUIDE.md` for complete frontend implementation details.
 
+### People Module Endpoints ✨ NEW
+- `/api/staffing-requests/{id}/rank` - Rank candidates with FitScore and optional rate preview
+- `/api/assignments` - Create assignments with immutable rate snapshots
+- `/api/assignments/{assignment_id}` - Update (non-snapshot fields) or cancel
+- `/api/rates/preview` - Resolve effective rate with full breakdown
+
+See `../docs/modules/people.md` and `../people-module-frontend-spec.md` for details.
+
 ### Response Format
 All successful responses follow this pattern:
 ```json

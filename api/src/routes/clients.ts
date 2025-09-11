@@ -5,6 +5,7 @@ import { ClientCreateBody, ClientUpdateBody, CreateProcBody, ClientSetupBody } f
 import { orchestrateClientSetup } from '../utils/clientSetup';
 import { logActivity } from '../utils/activity';
 import { chatOnce } from '../services/ai';
+import { clientMemory } from '../utils/memory';
 
 const router = Router();
 
@@ -95,6 +96,10 @@ router.post(
       `);
     const created = result.recordset[0];
     await logActivity({ type: 'ClientCreated', title: `Client ${name} created`, client_id: created.client_id });
+    
+    // Capture memory atom for client creation
+    await clientMemory.created(1, created.client_id, name); // TODO: Get org_id from context
+    
     ok(res, created, 201);
   })
 );

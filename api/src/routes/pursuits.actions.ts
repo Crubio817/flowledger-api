@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
-import { asyncHandler, badRequest, ok } from '../utils/http';
-import { logActivity } from '../utils/activity';
+import { asyncHandler, badRequest, ok, notFound } from '../utils/http';
 import { assertTx, PURSUIT_TX, ensureSubmitChecklistPasses } from '../state/guards';
+import { logActivity } from '../utils/activity';
+import { pursuitMemory } from '../utils/memory';
 
 const router = Router();
 
@@ -181,6 +182,10 @@ router.post('/:id/submit', asyncHandler(async (req, res) => {
 
     await tx.commit();
     await logActivity({ type: 'PursuitUpdated', title: `Pursuit ${id} submitted`, signal_id: id });
+    
+    // Create memory atom for pursuit submission
+    await pursuitMemory.proposalSubmitted(orgId, id, `v${v.version}`);
+    
     ok(res, { ok: true, proposal_id: v.proposal_id });
   } catch (err) {
     await tx.rollback();
@@ -243,6 +248,10 @@ router.post('/:id/won', asyncHandler(async (req, res) => {
 
     await tx.commit();
     await logActivity({ type: 'PursuitUpdated', title: `Pursuit ${id} won`, signal_id: id });
+    
+    // Create memory atom for pursuit won
+    await pursuitMemory.won(orgId, id, 'contract secured with client');
+    
     ok(res, { ok: true });
   } catch (err) {
     await tx.rollback();
@@ -307,6 +316,11 @@ router.post('/:id/lost', asyncHandler(async (req, res) => {
 
     await tx.commit();
     await logActivity({ type: 'PursuitUpdated', title: `Pursuit ${id} lost`, signal_id: id });
+    
+    // Create memory atom for pursuit lost
+    const reason = req.body?.reason || 'No reason provided';
+    await pursuitMemory.lost(orgId, id, reason);
+    
     ok(res, { ok: true });
   } catch (err) {
     await tx.rollback();

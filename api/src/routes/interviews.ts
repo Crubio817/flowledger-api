@@ -9,7 +9,7 @@ const router = Router();
 async function auditExists(auditId: number) {
   const pool = await getPool();
   const r = await pool.request().input('id', sql.Int, auditId).query(
-    `SELECT audit_id FROM app.audits WHERE audit_id = @id`
+    `SELECT engagement_id FROM app.engagement WHERE engagement_id = @id AND type = 'audit'`
   );
   return r.recordset.length > 0;
 }

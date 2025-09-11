@@ -123,7 +123,7 @@ The flagship People Module provides a complete staffing and resource management 
 ### **API Highlights**
 ```typescript
 // Candidate ranking with FitScore
-GET /api/staffing-requests/:id/rank
+POST /api/staffing-requests/:id/rank
 
 // Rate preview with full breakdown
 GET /api/rates/preview

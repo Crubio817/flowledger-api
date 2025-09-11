@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { logActivity } from '../utils/activity';
+import { engagementMemory } from '../utils/memory';
 import {
   assertTx,
   ENGAGEMENT_TX,
@@ -177,6 +178,9 @@ router.post('/', asyncHandler(async (req, res) => {
   //   title: `${type} engagement created: ${name}`,
   //   engagement_id: created.engagement_id
   // });
+
+  // Capture memory atom for engagement creation
+  await engagementMemory.created(org_id, created.engagement_id, name, type);
 
   ok(res, created, 201);
 }));

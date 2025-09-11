@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+const dotenv = require('dotenv');
 import fs from 'fs';
 import path from 'path';
 import { getSecret } from './keyvault';

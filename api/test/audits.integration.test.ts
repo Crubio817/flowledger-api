@@ -16,7 +16,7 @@ jest.mock('../src/db/pool', () => {
     query: async (q: string) => {
       const sql = String(q || '').toLowerCase();
       // engagementExists / client_engagements lookup
-      if (sql.includes('from app.client_engagements') && sql.includes('where engagement_id')) {
+      if (sql.includes('from app.engagement') && sql.includes('where engagement_id')) {
         return { recordset: [{ engagement_id: 10, client_id: 5 }], rowsAffected: [1] };
       }
       // fallback selects for audits by id return a default row

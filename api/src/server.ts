@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import * as WebSocket from 'ws';
 import * as http from 'http';
 // Load dotenv early so any services reading process.env see values
-import './config/env';
+// import './config/env';
 // config/env is imported dynamically to allow Key Vault secret hydration before assertions
 import { errorHandler } from './middleware/error';
 import clients from './routes/clients';
@@ -47,6 +47,11 @@ import principals from './routes/principals';
 import comms from './routes/comms';
 import engagements from './routes/engagements';
 import billing from './routes/billing';
+import people from './routes/people';
+import docs from './routes/docs';
+import memory from './routes/memory';
+import spotlights from './routes/spotlights';
+// app.use('/api/automation', automation);
 // import automation from './routes/automation';
 
 export async function createApp() {
@@ -67,27 +72,27 @@ export async function createApp() {
   app.use(cors());
   app.use(express.json({ limit: '1mb' }));
 
-/**
- * @openapi
- * /healthz:
- *   get:
- *     summary: Liveness
- *     responses:
- *       200:
- *         description: OK
- */
-app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
-// Alias for convenience
-/**
- * @openapi
- * /api/health:
- *   get:
- *     summary: API health
- *     responses:
- *       200:
- *         description: OK
- */
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+  /**
+   * @openapi
+   * /healthz:
+   *   get:
+   *     summary: Liveness
+   *     responses:
+   *       200:
+   *         description: OK
+   */
+  app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
+  // Alias for convenience
+  /**
+   * @openapi
+   * /api/health:
+   *   get:
+   *     summary: API health
+   *     responses:
+   *       200:
+   *         description: OK
+   */
+  app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/clients', clients);
 app.use('/api/audits', audits);
@@ -131,7 +136,18 @@ app.use('/api/principals', principals);
 app.use('/api/comms', comms);
 app.use('/api/engagements', engagements);
 app.use('/api/billing', billing);
+app.use('/api', people);
+app.use('/api/docs', docs);
+app.use('/api/memory', memory);
+app.use('/api/spotlights', spotlights);
 // app.use('/api/automation', automation);
+
+  // Attach OpenAPI/Swagger UI routes (serves /openapi.json and /api/docs)
+  try {
+    setupOpenApi(app);
+  } catch (e) {
+    console.error('[startup] Failed to initialize OpenAPI docs:', (e as any)?.message || e);
+  }
 
 app.use('/webhooks', webhooks);
 app.post('/mcp', handleMCPRequest);
@@ -139,85 +155,145 @@ app.post('/mcp', handleMCPRequest);
 app.use(errorHandler);
 
 // WebSocket Server Setup
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+// const server = http.createServer(app);
+// const wss = new WebSocket.Server({ server });
 
 // WebSocket connection handling
-wss.on('connection', (ws: WebSocket, req: any) => {
-  console.log('[WebSocket] New connection established');
+// wss.on('connection', (ws: WebSocket, req: any) => {
+//   console.log('[WebSocket] New connection established');
 
-  ws.on('message', async (message: Buffer) => {
-    try {
-      const data = JSON.parse(message.toString());
+//   ws.on('message', async (message: Buffer) => {
+//     try {
+//       const data = JSON.parse(message.toString());
 
-      switch (data.type) {
-        case 'ping':
-          ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
-          break;
+//       switch (data.type) {
+//         case 'ping':
+//           ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+//           break;
 
-        case 'subscribe':
-          // Handle subscription logic here
-          console.log('[WebSocket] Subscription request:', data);
-          ws.send(JSON.stringify({
-            type: 'subscribed',
-            subscription_type: data.subscription_type,
-            resource_id: data.resource_id
-          }));
-          break;
+//         case 'subscribe':
+//           // Handle subscription logic here
+//           console.log('[WebSocket] Subscription request:', data);
+//           ws.send(JSON.stringify({
+//             type: 'subscribed',
+//             subscription_type: data.subscription_type,
+//             resource_id: data.resource_id
+//           }));
+//           break;
 
-        case 'unsubscribe':
-          // Handle unsubscription logic here
-          console.log('[WebSocket] Unsubscription request:', data);
-          ws.send(JSON.stringify({
-            type: 'unsubscribed',
-            subscription_type: data.subscription_type,
-            resource_id: data.resource_id
-          }));
-          break;
+//         case 'unsubscribe':
+//           // Handle unsubscription logic here
+//           console.log('[WebSocket] Unsubscription request:', data);
+//           ws.send(JSON.stringify({
+//             type: 'unsubscribed',
+//             subscription_type: data.subscription_type,
+//             resource_id: data.resource_id
+//           }));
+//           break;
 
-        default:
-          console.log('[WebSocket] Unknown message type:', data.type);
-      }
-    } catch (error) {
-      console.error('[WebSocket] Error processing message:', error);
-      ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
-    }
-  });
+//         default:
+//           console.log('[WebSocket] Unknown message type:', data.type);
+//       }
+//     } catch (error) {
+//       console.error('[WebSocket] Error processing message:', error);
+//       ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
+//     }
+//   });
 
-  ws.on('close', () => {
-    console.log('[WebSocket] Connection closed');
-  });
+//   ws.on('close', () => {
+//     console.log('[WebSocket] Connection closed');
+//   });
 
-  ws.on('error', (error: Error) => {
-    console.error('[WebSocket] Connection error:', error);
-  });
+//   ws.on('error', (error: Error) => {
+//     console.error('[WebSocket] Connection error:', error);
+//   });
 
-  // Send welcome message
-  ws.send(JSON.stringify({
-    type: 'welcome',
-    message: 'Connected to FlowLedger Communication Hub',
-    timestamp: new Date().toISOString()
-  }));
-});
-
-// OpenAPI (must be after routes so annotations are picked up by scanner)
-    try {
-      const { setupOpenApi } = await import('./docs/openapi');
-      setupOpenApi(app);
-    } catch (e) {
-      console.warn('[startup] OpenAPI setup failed:', e);
-    }
-// setupOpenApi(app);
-  return { app, server };
-}
+//   // Send welcome message
+//   ws.send(JSON.stringify({
+//     type: 'welcome',
+//     message: 'Connected to FlowLedger Communication Hub',
+//     timestamp: new Date().toISOString()
+//   }));
+// });
 
 // If run directly, start listener (preserve original CLI behavior)
+  return { app };
+}
+
+// Start listener only when this file is executed directly (not when imported in tests/tools)
 if (require.main === module) {
-  createApp().then(async ({ app, server }) => {
-    const { env } = await import('./config/env');
-    server.listen(env.port, () => {
-      console.log(`API listening on http://localhost:${env.port} (sql.auth=${env.sql.auth})`);
-      console.log(`WebSocket server ready on ws://localhost:${env.port}`);
-    });
-  }).catch(err => { console.error('Failed to start server', err); process.exit(1); });
+  (async () => {
+    try {
+      const { app } = await createApp();
+      const { env } = await import('./config/env');
+      const basePort = env.port;
+      const maxAttempts = 10;
+      let attempt = 0;
+      let server: http.Server | undefined;
+
+      async function tryListen(port: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+          const s = http.createServer(app);
+          let resolved = false;
+          s.on('error', (err: any) => {
+            if (resolved) return; // already resolved/rejected
+            if (err?.code === 'EADDRINUSE') {
+              s.close();
+              return reject(err);
+            }
+            return reject(err);
+          });
+          s.listen(port, () => {
+            resolved = true;
+            server = s;
+            resolve(port);
+          });
+        });
+      }
+
+      while (attempt < maxAttempts) {
+        const candidate = basePort + attempt;
+        try {
+          const chosen = await tryListen(candidate);
+          if (chosen !== basePort) {
+            console.warn(`[startup] Port ${basePort} in use; fell back to ${chosen}`);
+          }
+          console.log(`API listening on http://localhost:${chosen} (sql.auth=${env.sql.auth})`);
+          break;
+        } catch (e: any) {
+          if (e?.code === 'EADDRINUSE') {
+            attempt += 1;
+            if (attempt >= maxAttempts) {
+              console.error(`[startup] All ${maxAttempts} port attempts starting at ${basePort} failed due to EADDRINUSE.`);
+              throw e;
+            }
+          } else {
+            throw e;
+          }
+        }
+      }
+
+      // Graceful shutdown so watcher restarts free the port quickly
+      const shutdown = (signal: string) => {
+        if (!server) return process.exit(0);
+        console.log(`[shutdown] ${signal} received, closing server...`);
+        server.close(err => {
+          if (err) {
+            console.error('[shutdown] Error during close', err);
+            process.exit(1);
+          } else {
+            console.log('[shutdown] Server closed cleanly');
+            process.exit(0);
+          }
+        });
+        // Failsafe: force exit if close hangs
+        setTimeout(() => process.exit(0), 5000).unref();
+      };
+      process.on('SIGINT', () => shutdown('SIGINT'));
+      process.on('SIGTERM', () => shutdown('SIGTERM'));
+    } catch (err) {
+      console.error('Failed to start server', err);
+      process.exit(1);
+    }
+  })();
 }

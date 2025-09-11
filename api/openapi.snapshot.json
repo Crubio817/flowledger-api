@@ -9344,6 +9344,269 @@
         }
       }
     },
+    "/api/docs": {
+      "get": {
+        "summary": "List documents",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document list"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create document",
+        "tags": [
+          "Documents"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "org_id",
+                  "title",
+                  "type",
+                  "source"
+                ],
+                "properties": {
+                  "org_id": {
+                    "type": "integer"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "storage_url": {
+                    "type": "string"
+                  },
+                  "mime_type": {
+                    "type": "string"
+                  },
+                  "size_bytes": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document created"
+          }
+        }
+      }
+    },
+    "/api/docs/{id}/versions": {
+      "post": {
+        "summary": "Add document version",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "storage_ref",
+                  "hash_sha256"
+                ],
+                "properties": {
+                  "storage_ref": {
+                    "type": "string"
+                  },
+                  "hash_sha256": {
+                    "type": "string"
+                  },
+                  "change_note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Version added"
+          }
+        }
+      }
+    },
+    "/api/docs/{id}/status": {
+      "patch": {
+        "summary": "Update document status",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/api/docs/{id}/share": {
+      "post": {
+        "summary": "Create share link",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "scope"
+                ],
+                "properties": {
+                  "scope": {
+                    "type": "string"
+                  },
+                  "expires_at": {
+                    "type": "string"
+                  },
+                  "watermark": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Share link created"
+          }
+        }
+      }
+    },
     "/api/engagements": {
       "get": {
         "summary": "List engagements",
@@ -10344,6 +10607,432 @@
         }
       }
     },
+    "/api/memory/card": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get memory card for an entity",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pursuit",
+                "candidate",
+                "engagement",
+                "comms_thread"
+              ]
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Memory card with summary and top atoms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "summary": {
+                          "type": "object"
+                        },
+                        "top_atoms": {
+                          "type": "array"
+                        },
+                        "last_built_at": {
+                          "type": "string"
+                        },
+                        "etag": {
+                          "type": "string"
+                        },
+                        "empty": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/memory/atoms": {
+      "post": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Create a memory atom",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "entity_type",
+                  "entity_id",
+                  "atom_type",
+                  "content",
+                  "source"
+                ],
+                "properties": {
+                  "entity_type": {
+                    "type": "string"
+                  },
+                  "entity_id": {
+                    "type": "integer"
+                  },
+                  "atom_type": {
+                    "type": "string",
+                    "enum": [
+                      "decision",
+                      "risk",
+                      "preference",
+                      "status",
+                      "note"
+                    ]
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "object",
+                    "properties": {
+                      "system": {
+                        "type": "string"
+                      },
+                      "origin_id": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "occurred_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Atom created successfully"
+          }
+        }
+      }
+    },
+    "/api/memory/redactions": {
+      "post": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Redact or correct a memory atom",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "atom_id",
+                  "action",
+                  "reason"
+                ],
+                "properties": {
+                  "atom_id": {
+                    "type": "integer"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "redact",
+                      "correct"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "correction_content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Redaction processed successfully"
+          }
+        }
+      }
+    },
+    "/api/staffing-requests/{id}/rank": {
+      "post": {
+        "summary": "Rank candidates for a staffing request",
+        "tags": [
+          "People"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_rate_preview",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ranked candidates with optional rate preview"
+          }
+        }
+      }
+    },
+    "/api/assignments": {
+      "post": {
+        "summary": "Create assignment with rate snapshot",
+        "tags": [
+          "People"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assignment created"
+          }
+        }
+      }
+    },
+    "/api/assignments/{assignment_id}": {
+      "patch": {
+        "summary": "Update assignment (non-snapshot fields)",
+        "tags": [
+          "People"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assignment updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel assignment",
+        "tags": [
+          "People"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assignment cancelled"
+          }
+        }
+      }
+    },
+    "/api/rates/preview": {
+      "get": {
+        "summary": "Resolve effective rate with breakdown",
+        "tags": [
+          "People"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "role_template_id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "skills",
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated skill IDs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "engagement_id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "client_id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "person_id",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "target_currency",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rate preview"
+          }
+        }
+      }
+    },
     "/api/pursuits/{id}/stage": {
       "post": {
         "summary": "Change pursuit stage",
@@ -10772,6 +11461,183 @@
             "description": "Signals list"
           }
         }
+      }
+    },
+    "/api/spotlights": {
+      "get": {
+        "summary": "List spotlights",
+        "tags": [
+          "Spotlights"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "domain",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a new spotlight",
+        "tags": [
+          "Spotlights"
+        ]
+      }
+    },
+    "/api/spotlights/domains": {
+      "get": {
+        "summary": "List unique domains for spotlights",
+        "tags": [
+          "Spotlights"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/spotlights/fields": {
+      "get": {
+        "summary": "List spotlight fields",
+        "tags": [
+          "Spotlights"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "domain",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a new spotlight field",
+        "tags": [
+          "Spotlights"
+        ]
+      }
+    },
+    "/api/spotlights/analytics": {
+      "get": {
+        "summary": "Get spotlight analytics",
+        "tags": [
+          "Spotlights"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/spotlights/{id}": {
+      "get": {
+        "summary": "Get spotlight details",
+        "tags": [
+          "Spotlights"
+        ]
+      },
+      "put": {
+        "summary": "Update spotlight",
+        "tags": [
+          "Spotlights"
+        ]
+      }
+    },
+    "/api/spotlights/{id}/evaluate": {
+      "post": {
+        "summary": "Evaluate signal against spotlight",
+        "tags": [
+          "Spotlights"
+        ]
+      }
+    },
+    "/api/spotlights/{id}/clone": {
+      "post": {
+        "summary": "Clone spotlight profile",
+        "tags": [
+          "Spotlights"
+        ]
+      }
+    },
+    "/api/spotlights/{id}/performance": {
+      "get": {
+        "summary": "Get spotlight performance metrics",
+        "tags": [
+          "Spotlights"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
       }
     },
     "/api/task-packs": {
@@ -11667,237 +12533,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/staffing-requests/{id}/rank": {
-      "post": {
-        "tags": [
-          "People"
-        ],
-        "summary": "Rank candidates for a staffing request",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "org_id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "in": "query",
-            "name": "include_rate_preview",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ranked candidates",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "person_id": {
-                            "type": "integer"
-                          },
-                          "fit_score": {
-                            "type": "number"
-                          },
-                          "reasons": {
-                            "type": "array",
-                            "items": {
-                              "type": "object"
-                            }
-                          },
-                          "modeled_rate": {
-                            "$ref": "#/components/schemas/RateBreakdown"
-                          }
-                        }
-                      }
-                    },
-                    "meta": {
-                      "$ref": "#/components/schemas/PageMeta"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/assignments": {
-      "post": {
-        "tags": [
-          "People"
-        ],
-        "summary": "Create assignment with rate snapshot",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Assignment created"
-          }
-        }
-      }
-    },
-    "/api/assignments/{id}": {
-      "patch": {
-        "tags": [
-          "People"
-        ],
-        "summary": "Update assignment (non-snapshot fields)",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Assignment updated"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "People"
-        ],
-        "summary": "Delete assignment",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Assignment deleted"
-          }
-        }
-      }
-    },
-    "/api/rates/preview": {
-      "get": {
-        "tags": [
-          "People"
-        ],
-        "summary": "Resolve effective rate with breakdown",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "org_id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "role_template_id",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "level",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "skills",
-            "schema": {
-              "type": "string",
-              "description": "Comma-separated skill IDs"
-            }
-          },
-          {
-            "in": "query",
-            "name": "engagement_id",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "as_of",
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Rate preview",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RateBreakdown"
-                }
-              }
-            }
           }
         }
       }

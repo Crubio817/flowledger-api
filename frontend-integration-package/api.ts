@@ -8,6 +8,9 @@ const api = axios.create({
   baseURL: 'http://localhost:4001/api'
 });
 
+// Export the api instance for use in other modules
+export { api };
+
 // Specific convenience functions
 export async function getDashboardStats() {
   const response = await api.get('/dashboard-stats');

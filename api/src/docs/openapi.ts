@@ -7,17 +7,20 @@ import { serve as swaggerServe, setup as swaggerSetup } from 'swagger-ui-express
 
 // Build a robust set of file globs so swagger-jsdoc can find
 // route annotations both in TS (dev) and JS (built) outputs.
+// Use __dirname to avoid depending on process.cwd() which may vary
+// (previous implementation incorrectly prefixed an extra 'api/' segment).
+const rootDir = path.resolve(__dirname, '..', '..'); // points to <repo>/api
 const apiGlobs: string[] = [
   // Source files (dev via ts-node / ts-node-dev)
-  path.resolve(process.cwd(), 'api', 'src', '**', '*.ts'),
+  path.join(rootDir, 'src', '**', '*.ts'),
   // Built files (prod after tsc)
-  path.resolve(process.cwd(), 'api', 'dist', '**', '*.js')
+  path.join(rootDir, 'dist', '**', '*.js')
 ];
 
 // Try to read version from package.json; fall back to hardcoded.
 function readPackageVersion(): string {
   try {
-    const pkgPath = path.resolve(process.cwd(), 'api', 'package.json');
+    const pkgPath = path.join(rootDir, 'package.json');
     const raw = fs.readFileSync(pkgPath, 'utf8');
     const pkg = JSON.parse(raw);
     return pkg.version || '0.1.0';
@@ -2312,6 +2315,9 @@ export function setupOpenApi(app: Express) {
       { prefix: '/api/auto', tag: 'Auto' },
       { prefix: '/api/billing', tag: 'Billing' },
       { prefix: '/api/engagements', tag: 'Engagements' },
+      { prefix: '/api/staffing-requests', tag: 'People' },
+      { prefix: '/api/assignments', tag: 'People' },
+      { prefix: '/api/rates', tag: 'People' },
       { prefix: '/api/audits', tag: 'Audits' },
       { prefix: '/api/audit-sipoc', tag: 'SIPOC' },
       { prefix: '/api/audit-step-progress', tag: 'Audit Step Progress' },

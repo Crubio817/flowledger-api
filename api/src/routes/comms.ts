@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getPool, sql } from '../db/pool';
 import { asyncHandler, badRequest, ok, listOk, notFound } from '../utils/http';
 import { ensureCommsThreadTransition } from '../state/guards';
+import { commsMemory } from '../utils/memory';
 
 const router = Router();
 
@@ -218,6 +219,9 @@ router.post('/threads/:id/reply', asyncHandler(async (req, res) => {
   await pool.request().input('threadId', sql.BigInt, parseInt(id)).query(`
     UPDATE app.comms_thread SET last_msg_at = SYSDATETIME(), updated_at = SYSDATETIME() WHERE thread_id = @threadId
   `);
+
+  // Capture memory atom for new communication
+  await commsMemory.messageSent(orgId, parseInt(id), 'reply', body);
 
   ok(res, { message_id: messageId }, 201);
 }));

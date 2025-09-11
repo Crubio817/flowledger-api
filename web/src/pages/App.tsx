@@ -2,6 +2,7 @@ import { Link, Route, Routes } from 'react-router-dom';
 import Dashboard from './Dashboard.tsx';
 import Clients from './Clients.tsx';
 import Audits from './Audits.tsx';
+import SpotlightPage from '../modules/spotlight/SpotlightPage.tsx';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Link to="/">Dashboard</Link>
           <Link to="/clients">Clients</Link>
           <Link to="/audits">Audits</Link>
+          <Link to="/spotlights">Spotlights</Link>
         </nav>
       </aside>
       <main className="p-6">
@@ -19,6 +21,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/clients" element={<Clients />} />
           <Route path="/audits" element={<Audits />} />
+          <Route path="/spotlights" element={<SpotlightPage />} />
         </Routes>
       </main>
     </div>

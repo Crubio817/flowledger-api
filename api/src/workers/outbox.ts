@@ -1,4 +1,5 @@
 import { getPool, sql } from '../db/pool';
+import { processMemoryEvents } from './memory-processor';
 
 export async function tick() {
   const pool = await getPool();
@@ -120,6 +121,13 @@ async function processEvent(event: any) {
       // Notify team (idempotent)
       await notifyPursuitLost(org_id, item_id, payload.reason);
       console.log(`Pursuit ${item_id} lost: ${payload.reason}`);
+      break;
+    case 'memory.atom.created':
+    case 'memory.summary.rebuild':
+    case 'memory.atom.redact':
+      // Process memory events
+      await processMemoryEvents();
+      console.log(`Memory event: ${event_name}`);
       break;
     default:
       console.log(`Unhandled event: ${event_name}`);
